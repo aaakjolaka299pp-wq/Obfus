@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clyde Luau Obfuscator | Premium Code Protection</title>
+  <meta name="description" content="Deep virtualization, register-based VM, and premium obfuscation for Roblox and Luau scripts.">
+  
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css?v=1.0.5">
+  <script src="app.js?v=1.0.5"></script>
+</head>
+<body>
+
+  <div class="web-container">
+    
+    <header class="web-header">
+      <div class="brand">
+        <h1 class="brand-title">Clyde Luau</h1>
+        <p class="brand-subtitle">Premium Obfuscation & Bytecode Virtualization</p>
+      </div>
+      <div class="header-badges">
+        <span class="web-badge badge-primary">Luau v0.723 Support</span>
+        <span class="web-badge badge-accent">Register VM Engine</span>
+      </div>
+    </header>
+
+    <section class="metrics-grid">
+      <div class="metric-card" id="card-tokens">
+        <div class="metric-label">Tokens</div>
+        <div class="metric-val" id="stat-tokens">0</div>
+      </div>
+      <div class="metric-card" id="card-statements">
+        <div class="metric-label">Statements</div>
+        <div class="metric-val" id="stat-statements">0</div>
+      </div>
+      <div class="metric-card" id="card-functions">
+        <div class="metric-label">Functions</div>
+        <div class="metric-val" id="stat-functions">0</div>
+      </div>
+      <div class="metric-card" id="card-locals">
+        <div class="metric-label">Local Variables</div>
+        <div class="metric-val" id="stat-locals">0</div>
+      </div>
+    </section>
+
+    <main class="workspace-grid">
+      
+      <div class="web-panel">
+        <div class="panel-header">
+          <span class="panel-title">[Input] Original Luau Code</span>
+        </div>
+        <div class="panel-body">
+          <textarea id="input-editor" spellcheck="false" placeholder="-- Paste your raw Luau source code here...&#10;&#10;local x = 42&#10;print('Hello World')">-- Clyde Luau Obfuscator
+-- Click the button below to compile and protect this example script!
+
+local message = "Hello, world!"
+print(message)
+
+local function square(n)
+    return n * n
+end
+
+print("Square of 5 is: " .. tostring(square(5)))</textarea>
+        </div>
+      </div>
+
+      <div class="web-panel controls-panel">
+        <div class="panel-header">
+          <span class="panel-title">[Options] Obfuscation Engine Config</span>
+        </div>
+        
+        <div class="panel-scroll-container">
+          <fieldset class="web-fieldset">
+            <legend class="web-legend">Protection Levels</legend>
+            
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="opt-rename" checked>
+              <label for="opt-rename">
+                <span class="option-title">Rename Variables</span>
+                <span class="option-desc">Scramble variable scopes into minified identifiers</span>
+              </label>
+            </div>
+
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="opt-preserve" checked>
+              <label for="opt-preserve">
+                <span class="option-title">Protect Roblox Globals</span>
+                <span class="option-desc">Prevent renaming of game APIs and engine indices</span>
+              </label>
+            </div>
+
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="opt-encode" checked>
+              <label for="opt-encode">
+                <span class="option-title">XOR Encrypt Strings</span>
+                <span class="option-desc">Converts plaintext strings into byte arrays</span>
+              </label>
+            </div>
+
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="opt-scramble" checked>
+              <label for="opt-scramble">
+                <span class="option-title">Control Flow Scrambling</span>
+                <span class="option-desc">Inject opaque predicates & junk branch conditions</span>
+              </label>
+            </div>
+
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="opt-oneline">
+              <label for="opt-oneline">
+                <span class="option-title">Minify Code</span>
+                <span class="option-desc">Remove all comments, whitespaces, and newlines</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="web-fieldset">
+            <legend class="web-legend">Bytecode Virtualization</legend>
+            
+            <div class="select-group">
+              <label for="opt-vm-type" class="select-label">VM Architecture:</label>
+              <select id="opt-vm-type">
+                <option value="none">None (Standard AST Obfuscation)</option>
+                <option value="register" selected>Register-Based VM (Polymorphic Engine)</option>
+                <option value="stack">Stack-Based VM (Classic Architecture)</option>
+              </select>
+            </div>
+
+            <div class="select-group">
+              <label for="opt-vm-level" class="select-label">Hardening Grade:</label>
+              <select id="opt-vm-level">
+                <option value="max" selected>Max (LZSS, Anti-Dump, S-Box Cipher)</option>
+                <option value="normal">Normal (XOR Table, Instruction Shuffling)</option>
+                <option value="debug">Debug (Readable VM for stack tracing)</option>
+              </select>
+            </div>
+          </fieldset>
+        </div>
+        
+        <div class="button-footer">
+          <button id="btn-obfuscate" class="glassy-button-blue">
+            <span class="btn-text">Obfuscate Script [Execute]</span>
+            <div class="btn-loader hidden"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="web-panel">
+        <div class="panel-header">
+          <span class="panel-title">[Output] Protected Luau Code</span>
+        </div>
+        <div class="panel-body">
+          <textarea id="output-editor" readonly placeholder="-- The obfuscated script output will display here..."></textarea>
+        </div>
+        <div class="button-footer">
+          <button id="btn-copy" class="glassy-button-silver" disabled>
+            <span id="copy-text">Copy to Clipboard</span>
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+    <section class="web-console">
+      <div class="console-header">
+        <div class="console-title-wrap">
+          <span class="console-indicator" id="indicator"></span>
+          <span class="console-header-title">Compiler Terminal</span>
+          <span id="status-title" style="display: none;">Ready</span>
+        </div>
+      </div>
+      <div class="console-body" id="terminal-console">
+        <div class="console-line line-system">[SYSTEM] Clyde Obfuscator Web-Engine initialized. Ready for script analysis.</div>
+      </div>
+    </section>
+
+  </div>
+
+</body>
+</html>
