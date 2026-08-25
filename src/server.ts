@@ -124,7 +124,7 @@ app.post("/api/obfuscate", (req: express.Request, res: express.Response) => {
 
 app.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
-  console.log(`\nClyde Obfuscator Server running at: ${url}`);
+  console.log(`\nP20 Obfuscator Server running at: ${url}`);
   console.log("Press CTRL+C to terminate.\n");
 
   exec(`start ${url}`, (err) => {
