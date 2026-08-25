@@ -1,6 +1,6 @@
 <div align="center">
 
-# Clyde-Luau-Obfuscator
+# P20-Luau-Obfuscator
 
 **Advanced Luau Obfuscator with VM-Based Protection**
 
