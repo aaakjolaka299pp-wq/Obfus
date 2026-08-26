@@ -15,7 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnUpload = document.getElementById("btn-upload");
   const fileInput = document.getElementById("file-input");
   const btnDownload = document.getElementById("btn-download");
-  const btnPastefy = document.getElementById("btn-pastefy");
+  const btnShare = document.getElementById("btn-share");
+  const optProvider = document.getElementById("opt-provider");
 
   const statusIndicator = document.getElementById("indicator");
   const statusTitle = document.getElementById("status-title");
@@ -89,13 +90,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  btnPastefy.addEventListener("click", async () => {
+  btnShare.addEventListener("click", async () => {
     if (outputEditor.value.trim() === "") return;
 
-    const pastefyText = document.getElementById("pastefy-text");
-    const originalText = pastefyText.innerText;
-    pastefyText.innerText = "Uploading...";
-    btnPastefy.disabled = true;
+    const shareText = document.getElementById("share-text");
+    const originalText = shareText.innerText;
+    shareText.innerText = "Uploading...";
+    btnShare.disabled = true;
 
     try {
       const response = await fetch("/api/paste", {
@@ -103,29 +104,30 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: outputEditor.value,
-          title: "P20 Lua Obfuscated Script"
+          title: "P20 Lua Obfuscated Script",
+          provider: optProvider.value
         })
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Pastefy upload failed");
+        throw new Error(result.error || "Upload failed");
       }
 
       await navigator.clipboard.writeText(result.url).catch(() => {});
 
-      pastefyText.innerText = "Link copied ✓";
+      shareText.innerText = "Link copied ✓";
 
       setTimeout(() => {
-        pastefyText.innerText = originalText;
+        shareText.innerText = originalText;
       }, 2500);
 
     } catch (err) {
       showToast(err.message, "error");
-      pastefyText.innerText = originalText;
+      shareText.innerText = originalText;
     } finally {
-      btnPastefy.disabled = false;
+      btnShare.disabled = false;
     }
   });
 
@@ -213,7 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
       outputEditor.value = result.output;
       btnCopy.disabled = false;
       btnDownload.disabled = false;
-      btnPastefy.disabled = false;
+      btnShare.disabled = false;
 
       setRailState("success");
 
@@ -222,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
       outputEditor.value = "";
       btnCopy.disabled = true;
       btnDownload.disabled = true;
-      btnPastefy.disabled = true;
+      btnShare.disabled = true;
       setRailState("error");
     } finally {
       btnText.innerText = originalBtnText;

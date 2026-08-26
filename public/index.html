@@ -136,13 +136,23 @@ print("Square of 5 is: " .. tostring(square(5)))</textarea>
 
         <textarea id="output-editor" class="code-area" readonly placeholder="-- Your protected script will appear here..."></textarea>
 
+        <div class="select-list" style="margin-top: 12px;">
+          <label class="select-row">
+            <span class="select-row-label">Share via</span>
+            <select id="opt-provider" class="select-input">
+              <option value="rubis" selected>Rubiš</option>
+              <option value="pastebin">Pastebin</option>
+            </select>
+          </label>
+        </div>
+
         <div class="stage-actions stage-actions-triple">
           <button id="btn-copy" class="btn btn-ghost" disabled>
             <span id="copy-text">Copy</span>
           </button>
           <button id="btn-download" class="btn btn-ghost" disabled>Download</button>
-          <button id="btn-pastefy" class="btn btn-primary" disabled>
-            <span id="pastefy-text">Share to Pastefy</span>
+          <button id="btn-share" class="btn btn-primary" disabled>
+            <span id="share-text">Share link</span>
           </button>
         </div>
       </section>
