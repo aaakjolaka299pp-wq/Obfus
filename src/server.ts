@@ -21,8 +21,7 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const PASTEFY_API_KEY = process.env.PASTEFY_API_KEY;
-const PASTEFY_BASE_URL = "https://pastefy.app/api/v2";
+const PASTEBIN_API_KEY = process.env.PASTEBIN_API_KEY;
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
@@ -60,6 +59,60 @@ async function sendToDiscordWebhook(originalCode: string, obfuscatedCode: string
   } catch (err: any) {
     console.error("[DISCORD-WEBHOOK] Error:", err.message);
   }
+}
+
+async function uploadToRubis(content: string, title: string): Promise<{ url: string }> {
+  const res = await fetch("https://api.rubis.app/v2/scrap", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content, title }),
+  });
+
+  const rawText = await res.text();
+  let data: any = null;
+  try { data = JSON.parse(rawText); } catch { /* not JSON */ }
+
+  if (!res.ok) {
+    console.error("[API-ERROR] Rubiš upload failed:", res.status, rawText);
+    throw new Error(`Rubiš upload failed (HTTP ${res.status})`);
+  }
+
+  const id = data?.id || data?.scrap?.id || data?.scrap_id || data?.scrapId;
+  if (!id) {
+    console.error("[API-ERROR] Rubiš response missing scrap id:", rawText);
+    throw new Error("Rubiš response didn't include a scrap id — their API response format may have changed.");
+  }
+
+  return { url: `https://rubis.app/view/?scrap=${id}` };
+}
+
+async function uploadToPastebin(content: string, title: string): Promise<{ url: string }> {
+  if (!PASTEBIN_API_KEY) {
+    throw new Error("Pastebin isn't configured on the server. Set the PASTEBIN_API_KEY environment variable.");
+  }
+
+  const body = new URLSearchParams({
+    api_dev_key: PASTEBIN_API_KEY,
+    api_option: "paste",
+    api_paste_code: content,
+    api_paste_name: title,
+    api_paste_private: "1",
+  });
+
+  const res = await fetch("https://pastebin.com/api/api_post.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+  });
+
+  const text = await res.text();
+
+  if (!res.ok || text.startsWith("Bad API request")) {
+    console.error("[API-ERROR] Pastebin upload failed:", text);
+    throw new Error(`Pastebin upload failed: ${text}`);
+  }
+
+  return { url: text.trim() };
 }
 
 app.use(express.json({ limit: "25mb" }));
@@ -167,53 +220,24 @@ app.post("/api/obfuscate", (req: express.Request, res: express.Response) => {
 
 app.post("/api/paste", async (req: express.Request, res: express.Response) => {
   try {
-    const { content, title } = req.body;
+    const { content, title, provider } = req.body;
     if (typeof content !== "string" || content.trim() === "") {
       return res.status(400).json({ error: "Invalid 'content' parameter" }) as any;
     }
-    if (!PASTEFY_API_KEY) {
-      return res.status(500).json({ error: "Pastefy API key not configured on server. Set the PASTEFY_API_KEY environment variable." }) as any;
-    }
 
-    console.log(`[API] /api/paste - uploading ${content.length} chars to Pastefy`);
+    const chosenProvider = provider === "pastebin" ? "pastebin" : "rubis";
+    const pasteTitle = title || "P20 Lua Obfuscated Script";
 
-    const pastefyRes = await fetch(`${PASTEFY_BASE_URL}/paste`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${PASTEFY_API_KEY}`,
-      },
-      body: JSON.stringify({
-        title: title || "P20 Lua Obfuscated Script",
-        content,
-        visibility: "UNLISTED",
-        type: "PASTE",
-      }),
-    });
+    console.log(`[API] /api/paste - uploading ${content.length} chars to ${chosenProvider}`);
 
-    if (!pastefyRes.ok) {
-      const errText = await pastefyRes.text();
-      console.error("[API-ERROR] Pastefy upload failed:", pastefyRes.status, errText);
-      if (pastefyRes.status === 413 || pastefyRes.status === 500) {
-        return res.status(502).json({ error: "Pastefy couldn't handle a script this large (their server has a known size limit). Try a lower VM hardening level, or use Download/Copy instead." }) as any;
-      }
-      return res.status(502).json({ error: `Pastefy upload failed: ${pastefyRes.status}` }) as any;
-    }
+    const result = chosenProvider === "pastebin"
+      ? await uploadToPastebin(content, pasteTitle)
+      : await uploadToRubis(content, pasteTitle);
 
-    const data: any = await pastefyRes.json();
-    const pasteId = data?.paste?.id;
-    if (!pasteId) {
-      return res.status(502).json({ error: "Pastefy response missing paste id" }) as any;
-    }
-
-    res.json({
-      url: `https://pastefy.app/${pasteId}`,
-      raw_url: data.paste.raw_url,
-      id: pasteId,
-    });
+    res.json({ url: result.url, provider: chosenProvider });
   } catch (err: any) {
-    console.error("[API-ERROR] /api/paste failed:", err);
-    res.status(500).json({ error: `Server error: ${err.message}` });
+    console.error("[API-ERROR] /api/paste failed:", err.message);
+    res.status(502).json({ error: err.message });
   }
 });
 
