@@ -194,8 +194,8 @@ app.post("/api/paste", async (req: express.Request, res: express.Response) => {
     if (!pastefyRes.ok) {
       const errText = await pastefyRes.text();
       console.error("[API-ERROR] Pastefy upload failed:", pastefyRes.status, errText);
-      if (pastefyRes.status === 413) {
-        return res.status(502).json({ error: "Script too large for Pastefy (try a lower VM hardening level, or use Download/Copy instead)." }) as any;
+      if (pastefyRes.status === 413 || pastefyRes.status === 500) {
+        return res.status(502).json({ error: "Pastefy couldn't handle a script this large (their server has a known size limit). Try a lower VM hardening level, or use Download/Copy instead." }) as any;
       }
       return res.status(502).json({ error: `Pastefy upload failed: ${pastefyRes.status}` }) as any;
     }
