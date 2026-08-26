@@ -3656,7 +3656,7 @@ export function generateVM(chunk: BytecodeChunk, options: VMGenOptions = {}): st
       `  #      ######    ####  `,
       `                            `,
       ``,
-      `  By RilzzOBF | P20LuaProtection`,
+      `  By https://p20luaobfuscation.up.railway.app/ | P20LuaProtection`,
       `  build ${fpHex}`,
     ];
 

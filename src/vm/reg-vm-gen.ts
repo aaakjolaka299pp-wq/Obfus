@@ -3694,7 +3694,7 @@ export function generateRegVM(chunk: RegBytecodeChunk, options: RegVMGenOptions 
       `#      ######    ####  `,
       `                          `,
       ``,
-      `By RilzzOBF | P20LuaProtection Just like VMProtect, but for Lua.`,
+      `By https://p20luaobfuscation.up.railway.app/ | P20LuaProtection Just like VMProtect, but for Lua.`,
     ];
     output = `--[[\n${art.join('\n')}\n]]\n` + output;
   }
