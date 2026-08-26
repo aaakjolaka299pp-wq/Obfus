@@ -3,60 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>P20 Lua Obfuscator | Premium Code Protection</title>
-  <meta name="description" content="Deep virtualization, register-based VM, and premium obfuscation for Roblox and Luau scripts.">
-  
-  
+  <title>P20 Lua — Luau Obfuscator</title>
+  <meta name="description" content="Protect Luau scripts before you ship them. Rename variables, encrypt strings, and compile to a virtual machine.">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="style.css?v=1.0.6">
-  <script src="app.js?v=1.0.6"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css?v=2.0.0">
+  <script src="app.js?v=2.0.0" defer></script>
 </head>
 <body>
 
-  <div class="web-container">
-    
-    <header class="web-header">
-      <div class="brand">
-        <h1 class="brand-title">P20 Lua</h1>
-        <p class="brand-subtitle">Premium Obfuscation & Bytecode Virtualization</p>
-      </div>
-      <div class="header-badges">
-        <span class="web-badge badge-primary">Luau v0.723 Support</span>
-        <span class="web-badge badge-accent">Register VM Engine</span>
-      </div>
+  <div class="page">
+
+    <header class="site-header">
+      <span class="wordmark">P20_LUA</span>
+      <p class="tagline">Protect Luau scripts before you ship them.</p>
     </header>
 
-    <section class="metrics-grid">
-      <div class="metric-card" id="card-tokens">
-        <div class="metric-label">Tokens</div>
-        <div class="metric-val" id="stat-tokens">0</div>
-      </div>
-      <div class="metric-card" id="card-statements">
-        <div class="metric-label">Statements</div>
-        <div class="metric-val" id="stat-statements">0</div>
-      </div>
-      <div class="metric-card" id="card-functions">
-        <div class="metric-label">Functions</div>
-        <div class="metric-val" id="stat-functions">0</div>
-      </div>
-      <div class="metric-card" id="card-locals">
-        <div class="metric-label">Local Variables</div>
-        <div class="metric-val" id="stat-locals">0</div>
-      </div>
-    </section>
+    <div class="signal-rail" id="signal-rail" aria-hidden="true"></div>
 
-    <main class="workspace-grid">
-      
-      <div class="web-panel">
-        <div class="panel-header">
-          <span class="panel-title">[Input] Original Luau Code</span>
+    <main class="pipeline">
+
+      <section class="stage" aria-labelledby="stage-source-title">
+        <div class="stage-head">
+          <span class="stage-eyebrow">01</span>
+          <h2 id="stage-source-title" class="stage-title">Source</h2>
+          <div class="stage-status" id="validation-status">
+            <span class="status-dot" id="indicator"></span>
+            <span id="status-title">Ready</span>
+          </div>
         </div>
-        <div class="panel-body">
-          <textarea id="input-editor" spellcheck="false" placeholder="-- Paste your raw Luau source code here...&#10;&#10;local x = 42&#10;print('Hello World')">-- P20 Lua Obfuscator
--- Click the button below to compile and protect this example script!
+
+        <textarea id="input-editor" class="code-area" spellcheck="false" placeholder="-- Paste your Luau source here...&#10;&#10;local x = 42&#10;print('Hello World')">-- P20 Lua Obfuscator
+-- Press "Obfuscate script" to protect this example.
 
 local message = "Hello, world!"
 print(message)
@@ -66,132 +47,130 @@ local function square(n)
 end
 
 print("Square of 5 is: " .. tostring(square(5)))</textarea>
+
+        <div class="stage-actions">
+          <input type="file" id="file-input" accept=".lua,.luau,.txt" hidden>
+          <button id="btn-upload" class="btn btn-ghost">Upload file</button>
         </div>
-        <div class="button-footer">
-          <input type="file" id="file-input" accept=".lua,.luau,.txt" style="display:none">
-          <button id="btn-upload" class="glassy-button-silver">
-            <span>Upload File</span>
+      </section>
+
+      <section class="stage" aria-labelledby="stage-protect-title">
+        <div class="stage-head">
+          <span class="stage-eyebrow">02</span>
+          <h2 id="stage-protect-title" class="stage-title">Protection</h2>
+        </div>
+
+        <div class="toggle-list">
+          <label class="toggle-row">
+            <input type="checkbox" id="opt-rename" checked>
+            <span class="toggle-copy">
+              <span class="toggle-title">Rename variables</span>
+              <span class="toggle-desc">Scrambles local names into short identifiers.</span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <input type="checkbox" id="opt-preserve" checked>
+            <span class="toggle-copy">
+              <span class="toggle-title">Protect Roblox globals</span>
+              <span class="toggle-desc">Keeps game APIs and engine indices untouched.</span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <input type="checkbox" id="opt-encode" checked>
+            <span class="toggle-copy">
+              <span class="toggle-title">Encrypt strings</span>
+              <span class="toggle-desc">Converts plain text strings into byte arrays.</span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <input type="checkbox" id="opt-scramble" checked>
+            <span class="toggle-copy">
+              <span class="toggle-title">Scramble control flow</span>
+              <span class="toggle-desc">Injects opaque conditions and junk branches.</span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <input type="checkbox" id="opt-oneline">
+            <span class="toggle-copy">
+              <span class="toggle-title">Minify code</span>
+              <span class="toggle-desc">Strips comments, whitespace, and newlines.</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="select-list">
+          <label class="select-row">
+            <span class="select-row-label">VM architecture</span>
+            <select id="opt-vm-type" class="select-input">
+              <option value="none">None — standard obfuscation</option>
+              <option value="register" selected>Register-based VM</option>
+              <option value="stack">Stack-based VM</option>
+            </select>
+          </label>
+
+          <label class="select-row">
+            <span class="select-row-label">Hardening grade</span>
+            <select id="opt-vm-level" class="select-input">
+              <option value="max" selected>Max — LZSS, anti-dump, S-box cipher</option>
+              <option value="normal">Normal — XOR table, instruction shuffling</option>
+              <option value="debug">Debug — readable VM for stack tracing</option>
+            </select>
+          </label>
+        </div>
+
+        <button id="btn-obfuscate" class="btn btn-primary btn-run">
+          <span class="btn-text">Obfuscate script</span>
+          <span class="btn-loader hidden" aria-hidden="true"></span>
+        </button>
+      </section>
+
+      <section class="stage" aria-labelledby="stage-output-title">
+        <div class="stage-head">
+          <span class="stage-eyebrow">03</span>
+          <h2 id="stage-output-title" class="stage-title">Output</h2>
+        </div>
+
+        <textarea id="output-editor" class="code-area" readonly placeholder="-- Your protected script will appear here..."></textarea>
+
+        <div class="stage-actions stage-actions-triple">
+          <button id="btn-copy" class="btn btn-ghost" disabled>
+            <span id="copy-text">Copy</span>
+          </button>
+          <button id="btn-download" class="btn btn-ghost" disabled>Download</button>
+          <button id="btn-pastefy" class="btn btn-primary" disabled>
+            <span id="pastefy-text">Share to Pastefy</span>
           </button>
         </div>
-      </div>
-
-      <div class="web-panel controls-panel">
-        <div class="panel-header">
-          <span class="panel-title">[Options] Obfuscation Engine Config</span>
-        </div>
-        
-        <div class="panel-scroll-container">
-          <fieldset class="web-fieldset">
-            <legend class="web-legend">Protection Levels</legend>
-            
-            <div class="checkbox-wrapper">
-              <input type="checkbox" id="opt-rename" checked>
-              <label for="opt-rename">
-                <span class="option-title">Rename Variables</span>
-                <span class="option-desc">Scramble variable scopes into minified identifiers</span>
-              </label>
-            </div>
-
-            <div class="checkbox-wrapper">
-              <input type="checkbox" id="opt-preserve" checked>
-              <label for="opt-preserve">
-                <span class="option-title">Protect Roblox Globals</span>
-                <span class="option-desc">Prevent renaming of game APIs and engine indices</span>
-              </label>
-            </div>
-
-            <div class="checkbox-wrapper">
-              <input type="checkbox" id="opt-encode" checked>
-              <label for="opt-encode">
-                <span class="option-title">XOR Encrypt Strings</span>
-                <span class="option-desc">Converts plaintext strings into byte arrays</span>
-              </label>
-            </div>
-
-            <div class="checkbox-wrapper">
-              <input type="checkbox" id="opt-scramble" checked>
-              <label for="opt-scramble">
-                <span class="option-title">Control Flow Scrambling</span>
-                <span class="option-desc">Inject opaque predicates & junk branch conditions</span>
-              </label>
-            </div>
-
-            <div class="checkbox-wrapper">
-              <input type="checkbox" id="opt-oneline">
-              <label for="opt-oneline">
-                <span class="option-title">Minify Code</span>
-                <span class="option-desc">Remove all comments, whitespaces, and newlines</span>
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset class="web-fieldset">
-            <legend class="web-legend">Bytecode Virtualization</legend>
-            
-            <div class="select-group">
-              <label for="opt-vm-type" class="select-label">VM Architecture:</label>
-              <select id="opt-vm-type">
-                <option value="none">None (Standard AST Obfuscation)</option>
-                <option value="register" selected>Register-Based VM (Polymorphic Engine)</option>
-                <option value="stack">Stack-Based VM (Classic Architecture)</option>
-              </select>
-            </div>
-
-            <div class="select-group">
-              <label for="opt-vm-level" class="select-label">Hardening Grade:</label>
-              <select id="opt-vm-level">
-                <option value="max" selected>Max (LZSS, Anti-Dump, S-Box Cipher)</option>
-                <option value="normal">Normal (XOR Table, Instruction Shuffling)</option>
-                <option value="debug">Debug (Readable VM for stack tracing)</option>
-              </select>
-            </div>
-          </fieldset>
-        </div>
-        
-        <div class="button-footer">
-          <button id="btn-obfuscate" class="glassy-button-blue">
-            <span class="btn-text">Obfuscate Script [Execute]</span>
-            <div class="btn-loader hidden"></div>
-          </button>
-        </div>
-      </div>
-
-      <div class="web-panel">
-        <div class="panel-header">
-          <span class="panel-title">[Output] Protected Luau Code</span>
-        </div>
-        <div class="panel-body">
-          <textarea id="output-editor" readonly placeholder="-- The obfuscated script output will display here..."></textarea>
-        </div>
-        <div class="button-footer">
-          <button id="btn-copy" class="glassy-button-silver" disabled>
-            <span id="copy-text">Copy to Clipboard</span>
-          </button>
-          <button id="btn-download" class="glassy-button-silver" disabled>
-            <span>Download File</span>
-          </button>
-          <button id="btn-pastefy" class="glassy-button-blue" disabled>
-            <span id="pastefy-text">Auto Pastefy</span>
-          </button>
-        </div>
-      </div>
+      </section>
 
     </main>
 
-    <section class="web-console">
-      <div class="console-header">
-        <div class="console-title-wrap">
-          <span class="console-indicator" id="indicator"></span>
-          <span class="console-header-title">Compiler Terminal</span>
-          <span id="status-title" style="display: none;">Ready</span>
-        </div>
+    <section class="about">
+      <h2 class="about-title">About P20</h2>
+
+      <div class="about-item">
+        <h3>What does this do?</h3>
+        <p>P20 rewrites your Luau source so it still runs exactly the same, but is much harder for anyone else to read or reverse-engineer. Variable names get scrambled, strings get encrypted, and — if you turn on virtualization — your logic compiles down to bytecode that runs on a custom VM embedded in the output.</p>
       </div>
-      <div class="console-body" id="terminal-console">
-        <div class="console-line line-system">[SYSTEM] P20 Obfuscator Web-Engine initialized. Ready for script analysis.</div>
+
+      <div class="about-item">
+        <h3>Will it change how my script runs?</h3>
+        <p>No. Obfuscation only changes the shape of the code, not its behavior. Roblox globals stay untouched by default so your game APIs keep working.</p>
+      </div>
+
+      <div class="about-item">
+        <h3>Is this unbreakable?</h3>
+        <p>No obfuscator is. Virtualization at the Max hardening grade makes static analysis and deobfuscation significantly harder, but a determined reverse-engineer can still work through it given enough time.</p>
       </div>
     </section>
 
   </div>
+
+  <div class="toast-region" id="toast-region" aria-live="polite"></div>
 
 </body>
 </html>

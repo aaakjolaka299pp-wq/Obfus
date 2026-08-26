@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const inputEditor = document.getElementById("input-editor");
   const outputEditor = document.getElementById("output-editor");
-  
+
   const optRename = document.getElementById("opt-rename");
   const optPreserve = document.getElementById("opt-preserve");
   const optEncode = document.getElementById("opt-encode");
@@ -9,26 +9,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const optOneLine = document.getElementById("opt-oneline");
   const optVmType = document.getElementById("opt-vm-type");
   const optVmLevel = document.getElementById("opt-vm-level");
-  
+
   const btnObfuscate = document.getElementById("btn-obfuscate");
   const btnCopy = document.getElementById("btn-copy");
   const btnUpload = document.getElementById("btn-upload");
   const fileInput = document.getElementById("file-input");
   const btnDownload = document.getElementById("btn-download");
   const btnPastefy = document.getElementById("btn-pastefy");
-  
-  const statTokens = document.getElementById("stat-tokens");
-  const statStatements = document.getElementById("stat-statements");
-  const statFunctions = document.getElementById("stat-functions");
-  const statLocals = document.getElementById("stat-locals");
-  
-  const consoleLog = document.getElementById("terminal-console");
+
   const statusIndicator = document.getElementById("indicator");
   const statusTitle = document.getElementById("status-title");
+  const signalRail = document.getElementById("signal-rail");
+  const toastRegion = document.getElementById("toast-region");
 
   let debounceTimer;
 
-  logConsole("API endpoints connected. Loading script analyzer...", "system");
   performLiveValidation();
 
   inputEditor.addEventListener("input", () => {
@@ -40,19 +35,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   btnCopy.addEventListener("click", () => {
     if (outputEditor.value.trim() === "") return;
-    
+
     navigator.clipboard.writeText(outputEditor.value).then(() => {
       const copyText = document.getElementById("copy-text");
       const originalText = copyText.innerText;
-      copyText.innerText = "Copied to Clipboard! ✓";
-      
-      logConsole("[COPY] Obfuscated script copied to clipboard.", "success");
-      
+      copyText.innerText = "Copied ✓";
+
       setTimeout(() => {
         copyText.innerText = originalText;
       }, 2000);
     }).catch(err => {
-      logConsole(`[COPY-ERROR] Failed to write to clipboard: ${err.message}`, "error");
+      showToast(`Couldn't copy to clipboard: ${err.message}`, "error");
     });
   });
 
@@ -67,11 +60,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const reader = new FileReader();
     reader.onload = (evt) => {
       inputEditor.value = evt.target.result;
-      logConsole(`[UPLOAD] Loaded "${file.name}" (${file.size} bytes) into input editor.`, "success");
+      showToast(`Loaded "${file.name}"`, "success");
       performLiveValidation();
     };
     reader.onerror = () => {
-      logConsole(`[UPLOAD-ERROR] Failed to read file "${file.name}".`, "error");
+      showToast(`Couldn't read "${file.name}"`, "error");
     };
     reader.readAsText(file);
 
@@ -81,17 +74,19 @@ document.addEventListener("DOMContentLoaded", () => {
   btnDownload.addEventListener("click", () => {
     if (outputEditor.value.trim() === "") return;
 
-    const blob = new Blob([outputEditor.value], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "obfuscated.lua";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    logConsole("[DOWNLOAD] Obfuscated script downloaded as obfuscated.lua", "success");
+    try {
+      const blob = new Blob([outputEditor.value], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "obfuscated.lua";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      showToast(`Download failed: ${err.message}`, "error");
+    }
   });
 
   btnPastefy.addEventListener("click", async () => {
@@ -101,8 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const originalText = pastefyText.innerText;
     pastefyText.innerText = "Uploading...";
     btnPastefy.disabled = true;
-
-    logConsole("[PASTEFY] Uploading obfuscated script to Pastefy...", "system");
 
     try {
       const response = await fetch("/api/paste", {
@@ -122,55 +115,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
       await navigator.clipboard.writeText(result.url).catch(() => {});
 
-      pastefyText.innerText = "Link Copied! ✓";
-      logConsole(`[PASTEFY] Uploaded successfully: ${result.url}`, "success");
+      pastefyText.innerText = "Link copied ✓";
 
       setTimeout(() => {
         pastefyText.innerText = originalText;
       }, 2500);
 
     } catch (err) {
-      logConsole(`[PASTEFY-ERROR] ${err.message}`, "error");
+      showToast(err.message, "error");
       pastefyText.innerText = originalText;
     } finally {
       btnPastefy.disabled = false;
     }
   });
 
-  function logConsole(message, type = "system") {
-    const line = document.createElement("div");
-    line.className = `console-line line-${type}`;
-    
-    const timestamp = new Date().toLocaleTimeString();
-    line.innerText = `[${timestamp}] ${message}`;
-    
-    consoleLog.appendChild(line);
-    consoleLog.scrollTop = consoleLog.scrollHeight;
-  }
-
-  function animateNumber(element, start, end, duration) {
-    if (start === end) {
-      element.innerText = end;
-      return;
-    }
-    const range = end - start;
-    let current = start;
-    const increment = end > start ? 1 : -1;
-    const stepTime = Math.abs(Math.floor(duration / range));
-    const timer = setInterval(() => {
-      current += increment;
-      element.innerText = current;
-      if (current === end) {
-        clearInterval(timer);
-      }
-    }, stepTime || 1);
-  }
-
   async function performLiveValidation() {
     const code = inputEditor.value;
     if (code.trim() === "") {
-      resetStats();
-      updateStatus("green", "Ready");
+      updateStatus("", "Ready");
       return;
     }
 
@@ -182,60 +144,45 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (!response.ok) {
-        throw new Error("Linter request failed");
+        throw new Error("Validation request failed");
       }
 
       const result = await response.json();
-      
-      if (result && result.stats) {
-        updateStatCounts(result.stats);
-      }
-
-      clearTerminalLogs();
 
       if (result && result.errors && result.errors.length > 0) {
         const hasErrors = result.errors.some(e => e.severity === "error");
-        
+
         if (hasErrors) {
-          updateStatus("red", "Syntax Errors");
-          logConsole("[LINTER] Syntax error detected in script:", "error");
+          const first = result.errors.find(e => e.severity === "error") || result.errors[0];
+          const locStr = first.line ? `line ${first.line}` : "";
+          updateStatus("red", `Syntax error ${locStr}`.trim());
         } else {
           updateStatus("amber", "Warnings");
-          logConsole("[LINTER] Warnings or unusual globals detected:", "warning");
         }
-
-        result.errors.forEach(err => {
-          const locStr = err.line ? `[L:${err.line} C:${err.column}]` : "[GLOBAL]";
-          const type = err.severity === "error" ? "error" : "warning";
-          logConsole(`${locStr} ${err.message}`, type);
-        });
       } else {
-        updateStatus("green", "Syntax Valid");
-        logConsole("[LINTER] Script syntax successfully analyzed. 0 errors, 0 warnings.", "success");
+        updateStatus("green", "Syntax valid");
       }
 
     } catch (err) {
-      updateStatus("amber", "Validation Offline");
-      logConsole(`[VALIDATION-ERROR] Live validation failed: ${err.message}`, "warning");
+      updateStatus("amber", "Validation offline");
     }
   }
 
   async function performObfuscation() {
     const code = inputEditor.value;
     if (code.trim() === "") {
-      logConsole("[WARNING] Please enter your Luau code first!", "warning");
+      showToast("Add some Luau code first", "error");
       return;
     }
 
     const btnText = btnObfuscate.querySelector(".btn-text");
     const loader = btnObfuscate.querySelector(".btn-loader");
-    
+
     const originalBtnText = btnText.innerText;
-    btnText.innerText = "Compiling & Protecting...";
+    btnText.innerText = "Compiling...";
     loader.classList.remove("hidden");
     btnObfuscate.disabled = true;
-
-    logConsole("[SYSTEM] Initiating obfuscation pipeline...", "system");
+    setRailState("running");
 
     const payload = {
       code,
@@ -268,19 +215,15 @@ document.addEventListener("DOMContentLoaded", () => {
       btnDownload.disabled = false;
       btnPastefy.disabled = false;
 
-      updateStatus("green", "Success");
-      logConsole("[SUCCESS] Obfuscation completed successfully!", "success");
-      if (payload.options.vmType !== "none") {
-        logConsole(`[VM-GENERATOR] Virtual machine generated (${payload.options.vmType.toUpperCase()} architecture, Level: ${payload.options.vmLevel.toUpperCase()}).`, "success");
-      }
+      setRailState("success");
 
     } catch (err) {
-      logConsole(`[OBFUSCATION-FAILED] Pipeline error: ${err.message}`, "error");
+      showToast(err.message, "error");
       outputEditor.value = "";
       btnCopy.disabled = true;
       btnDownload.disabled = true;
       btnPastefy.disabled = true;
-      updateStatus("red", "Failed");
+      setRailState("error");
     } finally {
       btnText.innerText = originalBtnText;
       loader.classList.add("hidden");
@@ -288,40 +231,55 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function resetStats() {
-    statTokens.innerText = "0";
-    statStatements.innerText = "0";
-    statFunctions.innerText = "0";
-    statLocals.innerText = "0";
-  }
-
-  function updateStatCounts(stats) {
-    const curTokens = parseInt(statTokens.innerText) || 0;
-    const curStatements = parseInt(statStatements.innerText) || 0;
-    const curFunctions = parseInt(statFunctions.innerText) || 0;
-    const curLocals = parseInt(statLocals.innerText) || 0;
-    
-    animateNumber(statTokens, curTokens, stats.tokens, 300);
-    animateNumber(statStatements, curStatements, stats.statements, 300);
-    animateNumber(statFunctions, curFunctions, stats.functions, 300);
-    animateNumber(statLocals, curLocals, stats.locals, 300);
-  }
-
   function updateStatus(color, text) {
     if (statusIndicator) {
-      statusIndicator.className = `console-indicator status-${color}`;
+      statusIndicator.className = `status-dot${color ? " status-" + color : ""}`;
     }
     if (statusTitle) {
       statusTitle.innerText = text;
     }
   }
 
-  function clearTerminalLogs() {
-    const lines = consoleLog.querySelectorAll(".console-line");
-    lines.forEach(line => {
-      if (line.classList.contains("line-error") || line.classList.contains("line-warning") || line.classList.contains("line-success")) {
-        line.remove();
-      }
-    });
+  function setRailState(state) {
+    if (!signalRail) return;
+    signalRail.classList.remove("is-running", "is-success", "is-error");
+    if (state === "running") {
+      signalRail.classList.add("is-running");
+    } else if (state === "success") {
+      signalRail.classList.add("is-success");
+      setTimeout(() => signalRail.classList.remove("is-success"), 1400);
+    } else if (state === "error") {
+      signalRail.classList.add("is-error");
+      setTimeout(() => signalRail.classList.remove("is-error"), 1800);
+    }
+  }
+
+  function showToast(message, type = "info") {
+    if (!toastRegion) return;
+
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.setAttribute("role", type === "error" ? "alert" : "status");
+
+    const text = document.createElement("span");
+    text.innerText = message;
+    toast.appendChild(text);
+
+    const dismiss = document.createElement("button");
+    dismiss.className = "toast-dismiss";
+    dismiss.innerText = "×";
+    dismiss.setAttribute("aria-label", "Dismiss notification");
+    dismiss.addEventListener("click", () => removeToast(toast));
+    toast.appendChild(dismiss);
+
+    toastRegion.appendChild(toast);
+
+    setTimeout(() => removeToast(toast), 4800);
+  }
+
+  function removeToast(toast) {
+    if (!toast || !toast.parentNode) return;
+    toast.classList.add("toast-leaving");
+    setTimeout(() => toast.remove(), 180);
   }
 });
