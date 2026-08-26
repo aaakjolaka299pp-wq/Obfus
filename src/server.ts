@@ -62,28 +62,30 @@ async function sendToDiscordWebhook(originalCode: string, obfuscatedCode: string
 }
 
 async function uploadToRubis(content: string, title: string): Promise<{ url: string }> {
-  const res = await fetch("https://api.rubis.app/v2/scrap", {
+  const query = new URLSearchParams({ title, public: "false" });
+
+  const res = await fetch(`https://api.rubis.app/v2/scrap?${query.toString()}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content, title }),
+    headers: { "Content-Type": "text/plain" },
+    body: content,
   });
 
   const rawText = await res.text();
   let data: any = null;
   try { data = JSON.parse(rawText); } catch { /* not JSON */ }
 
-  if (!res.ok) {
+  if (!res.ok || !data?.success) {
     console.error("[API-ERROR] Rubiš upload failed:", res.status, rawText);
     throw new Error(`Rubiš upload failed (HTTP ${res.status})`);
   }
 
-  const id = data?.id || data?.scrap?.id || data?.scrap_id || data?.scrapId;
-  if (!id) {
-    console.error("[API-ERROR] Rubiš response missing scrap id:", rawText);
+  const viewUrl = data?.view || (data?.scrapID ? `https://rubis.app/view/?scrap=${data.scrapID}` : null);
+  if (!viewUrl) {
+    console.error("[API-ERROR] Rubiš response missing scrapID/view:", rawText);
     throw new Error("Rubiš response didn't include a scrap id — their API response format may have changed.");
   }
 
-  return { url: `https://rubis.app/view/?scrap=${id}` };
+  return { url: viewUrl };
 }
 
 async function uploadToPastebin(content: string, title: string): Promise<{ url: string }> {
