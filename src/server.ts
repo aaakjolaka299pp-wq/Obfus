@@ -188,7 +188,7 @@ app.post("/api/obfuscate", (req: express.Request, res: express.Response) => {
 
     let ast = parse(tokens);
 
-    if (encodeStringsOpt) {
+    if (encodeStringsOpt && vmType === "none") {
       ast = encodeStrings(ast, { enabled: true });
     }
 
