@@ -32,8 +32,7 @@ function uniqueRandInt(min: number, max: number, exclude: Set<number>, rng: () =
   return v;
 }
 
-function obfuscateNum(n: number, rng: () => number): string {
-  n = n & 0xFF;
+function obfuscateNum(n: number, rng: () => number): string {  n = n & 0xFF;
   const variant = Math.floor(rng() * 7);
   switch (variant) {
     case 0: {
@@ -83,6 +82,11 @@ function obfuscateNum(n: number, rng: () => number): string {
 export function generateBootstrap(config: BootstrapConfig): string {
   const { vmBlob, vmOrigLen, xorKey, invSbox, checksum, chunkName = "P20", rng } = config;
 
+  const charLit = (str: string, charFnName: string): string => {
+    const codes = str.split("").map((c) => obfuscateNum(c.charCodeAt(0), rng)).join(",");
+    return `${charFnName}(${codes})`;
+  };
+
   const prefixes = ["_0", "_1", "_2", "_3", "_4", "_5"];
   const suffixes = "abcdefghjkmnpqrstuvwx".split('');
   const allNames: string[] = [];
@@ -108,6 +112,9 @@ export function generateBootstrap(config: BootstrapConfig): string {
   const nRaw = N(), nDec = N();
 
   const nOk = N(), nFn = N(), nState = N(), nResult = N(), nZeroExp = N();
+
+  const nRG = N(), nToStr = N(), nFind2 = N();
+  const nTamperCheck = N(), nTB = N();
 
   const junkFnNames = [N(), N(), N(), N(), N()];
   const junkVarNames = [N(), N(), N(), N(), N(), N(), N(), N()];
@@ -162,6 +169,7 @@ export function generateBootstrap(config: BootstrapConfig): string {
       [nSub, 'string.sub'], [nChar, 'string.char'], [nLoad, 'loadstring'],
       [nAssert, 'assert'], [nType, 'type'], [nBxor, 'bit32.bxor'],
       [nPcall, 'pcall'], [nTconcat, 'table.concat'], [nBand, 'bit32.band'],
+      [nRG, 'rawget'], [nToStr, 'tostring'], [nFind2, 'string.find'],
     ];
     shuffle(builtins, rng);
     let bi = 0;
@@ -256,8 +264,53 @@ export function generateBootstrap(config: BootstrapConfig): string {
 
   const obfSboxMask = obfuscateNum(sboxMask, rng);
   const obfKeyMask = obfuscateNum(keyMask, rng);
+
+  {
+    const guardedNames = shuffle(
+      ["print", "warn", "pcall", "xpcall", "pairs", "ipairs", "type", "tostring", "setmetatable", "rawget", "rawset"],
+      rng
+    );
+    const guardedLits = guardedNames.map((n) => charLit(n, nChar)).join(",");
+    const builtinLit = charLit("builtin", nChar);
+    const hexLit = charLit("0x", nChar);
+    const osLit = charLit("os", nChar);
+    const clockLit = charLit("clock", nChar);
+    const penalty1 = obfuscateNum(1 + Math.floor(rng() * 254), rng);
+    const penalty2 = obfuscateNum(1 + Math.floor(rng() * 254), rng);
+    const nGuardArr = N(), nAcc = N(), nRep = N(), nFnv = N(), nOsTbl = N(), nClk = N(), nT0 = N(), nXv = N(), nDt = N();
+
+    fragments.push({
+      code: [
+        `local function ${nTamperCheck}()`,
+        `local ${nAcc}=0`,
+        `local ${nGuardArr}={${guardedLits}}`,
+        `for _0i=1,#${nGuardArr} do`,
+        `local _0ok,${nFnv}=${nPcall}(function() return ${nRG}(_G,${nGuardArr}[_0i]) end)`,
+        `if _0ok and ${nFnv} and ${nType}(${nFnv})=="function" then`,
+        `local ${nRep}=${nToStr}(${nFnv})`,
+        `if not ${nFind2}(${nRep},${builtinLit},1,true) and not ${nFind2}(${nRep},${hexLit},1,true) then`,
+        `${nAcc}=${nBxor}(${nAcc},${penalty1})`,
+        `end`,
+        `end`,
+        `end`,
+        `local _0ok2,${nOsTbl}=${nPcall}(function() return ${nRG}(_G,${osLit}) end)`,
+        `local ${nClk}=_0ok2 and ${nOsTbl} and ${nOsTbl}[${clockLit}]`,
+        `if ${nClk} then`,
+        `local ${nT0}=${nClk}()`,
+        `local ${nXv}=0`,
+        `for _0i=1,30000 do ${nXv}=${nXv}+_0i end`,
+        `local ${nDt}=${nClk}()-${nT0}`,
+        `if ${nDt}>0.35 then ${nAcc}=${nBxor}(${nAcc},${penalty2}) end`,
+        `end`,
+        `return ${nBand}(${nAcc},0xFF)`,
+        `end`,
+      ].join('\n'),
+      layer: spreadLayer(),
+    });
+  }
+
   fragments.push({ code: `local ${nSbox}={}\nfor _0i=1,256 do ${nSbox}[_0i]=${nBxor}(${nSboxRaw}[_0i],${obfSboxMask}) end`, layer: L_RECON });
-  fragments.push({ code: `local ${nKeyLen}=#${nKeyRaw}\nlocal ${nKey}={}\nfor _0i=1,${nKeyLen} do ${nKey}[_0i]=${nBxor}(${nKeyRaw}[_0i],${obfKeyMask}) end`, layer: L_RECON });
+  fragments.push({ code: `local ${nKeyLen}=#${nKeyRaw}\nlocal ${nTB}=${nTamperCheck}()\nlocal ${nKey}={}\nfor _0i=1,${nKeyLen} do ${nKey}[_0i]=${nBxor}(${nBxor}(${nKeyRaw}[_0i],${obfKeyMask}),${nTB}) end`, layer: L_RECON });
 
   for (let i = 0; i < junkVarNames.length; i++) {
     const jvType = Math.floor(rng() * 4);
