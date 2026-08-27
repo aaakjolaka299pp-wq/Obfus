@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const optEncode = document.getElementById("opt-encode");
   const optScramble = document.getElementById("opt-scramble");
   const optOneLine = document.getElementById("opt-oneline");
+  const optAntiTamper = document.getElementById("opt-antitamper");
   const optVmType = document.getElementById("opt-vm-type");
   const optVmLevel = document.getElementById("opt-vm-level");
 
@@ -194,6 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
         encodeStrings: optEncode.checked,
         scramble: optScramble.checked,
         oneLine: optOneLine.checked,
+        antiTamper: optAntiTamper.checked,
         vmType: optVmType.value,
         vmLevel: optVmLevel.value
       }

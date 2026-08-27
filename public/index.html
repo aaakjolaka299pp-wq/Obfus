@@ -100,6 +100,14 @@ print("Square of 5 is: " .. tostring(square(5)))</textarea>
               <span class="toggle-desc">Strips comments, whitespace, and newlines.</span>
             </span>
           </label>
+
+          <label class="toggle-row">
+            <input type="checkbox" id="opt-antitamper">
+            <span class="toggle-copy">
+              <span class="toggle-title">Anti-tamper protection</span>
+              <span class="toggle-desc">Detects hooked functions and debugger timing, halts on tampering. May false-positive on some executors.</span>
+            </span>
+          </label>
         </div>
 
         <div class="select-list">
