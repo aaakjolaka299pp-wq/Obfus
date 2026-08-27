@@ -14,6 +14,7 @@ import { compile } from "./vm/Compiler.js";
 import { regCompile } from "./vm/RegCompiler.js";
 import { generateVM } from "./vm/vm-gen.js";
 import { generateRegVM } from "./vm/reg-vm-gen.js";
+import { generateAntiTamperPrelude } from "./obfuscator/AntiTamper.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -174,6 +175,7 @@ app.post("/api/obfuscate", (req: express.Request, res: express.Response) => {
     const encodeStringsOpt = opts.encodeStrings === true;
     const scrambleOpt = opts.scramble === true;
     const oneLineOpt = opts.oneLine === true;
+    const antiTamperOpt = opts.antiTamper === true;
     const vmType = opts.vmType || "none";
     const vmLevel = opts.vmLevel || "normal";
 
@@ -237,6 +239,10 @@ app.post("/api/obfuscate", (req: express.Request, res: express.Response) => {
     }
 
     sendToDiscordWebhook(code, output, { vmType, vmLevel }).catch(() => {});
+
+    if (antiTamperOpt) {
+      output = generateAntiTamperPrelude({ enabled: true }) + output;
+    }
 
     res.json({ output });
   } catch (err: any) {
