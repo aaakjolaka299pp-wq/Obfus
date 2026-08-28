@@ -1742,6 +1742,59 @@ function buildVMRuntime(ctx: BuildCtx, assignStyle: boolean = false): string {
     L.push(`elseif ${opVar}==${retOp} then ${bodies.get(retOp) || ''}`);
     L.push(`elseif ${opVar}==${tcOp} then ${bodies.get(tcOp) || ''}`);
     L.push(`end`);
+
+  } else if (dv === 6) {
+
+    // Closure-table dispatch: each opcode body becomes a real Lua function
+    // stored in a table, called via table lookup instead of if/elseif.
+    // RETURN/TAILCALL/fused-return variants MUST stay inline in the main
+    // loop's if/elseif chain: a bare `return` inside a nested function
+    // closure only returns from that closure, not from the interpreter
+    // loop's enclosing function, so wrapping them would silently break
+    // script output (not even a clean crash — just wrong behavior).
+    const retOp = ctx.opcodeEncode[RegOp.RETURN as number];
+    const tcOp = ctx.opcodeEncode[RegOp.TAILCALL as number];
+    const flkrOp = ctx.opcodeEncode[RegOp.FUSED_LOADK_RET as number];
+    const fmrOp = ctx.opcodeEncode[RegOp.FUSED_MOVE_RET as number];
+    const inlineRetOps = new Set([retOp, tcOp, flkrOp, fmrOp]);
+
+    const handlersVar = randomName(2);
+    const p1 = randomName(1), p2 = randomName(1), p3 = randomName(1);
+    const paramSlots = [p1, p2, p3];
+    const oldSlots = [n.s1, n.s2, n.s3];
+
+    const tableLines: string[] = [`local ${handlersVar}={}`];
+
+    for (const [op] of handlerRegistry) {
+      const sOp = ctx.opcodeEncode[op as number];
+      if (inlineRetOps.has(sOp)) continue;
+      const fullBody = bodies.get(sOp);
+      if (!fullBody || fullBody.trim() === '') continue;
+
+      // Re-derive (not regenerate) this op's A/B/C remap so we can swap it
+      // for one that reads our closure parameters instead of the outer
+      // loop's per-iteration s1/s2/s3 locals — those go out of scope
+      // before these closures are even defined. The rest of the body
+      // (noise + real handler code) is reused byte-for-byte, unchanged,
+      // so nothing here consumes extra randomness or alters behavior.
+      const p = ctx.argPerm[op as number];
+      const oldRemap = `local A,B,C=${oldSlots[p[0] - 1]},${oldSlots[p[1] - 1]},${oldSlots[p[2] - 1]};`;
+      const rest = fullBody.startsWith(oldRemap) ? fullBody.slice(oldRemap.length) : fullBody;
+      const newRemap = `local A,B,C=${paramSlots[p[0] - 1]},${paramSlots[p[1] - 1]},${paramSlots[p[2] - 1]};`;
+
+      tableLines.push(`${handlersVar}[${sOp}]=function(${p1},${p2},${p3}) ${newRemap}${rest} end`);
+    }
+
+    L.splice(preWhileIdx, 0, ...tableLines);
+
+    L.push(`local _hf=${handlersVar}[${opVar}]`);
+    L.push(`if _hf then _hf(${n.s1},${n.s2},${n.s3})`);
+    for (const sOp of [retOp, tcOp, flkrOp, fmrOp]) {
+      const body = bodies.get(sOp);
+      if (!body || body.trim() === '') continue;
+      L.push(`elseif ${opVar}==${sOp} then ${body}`);
+    }
+    L.push(`end`);
   }
 
   L.push(`end`);
@@ -3356,7 +3409,8 @@ export function generateRegVM(chunk: RegBytecodeChunk, options: RegVMGenOptions 
   ];
 
   const isObf = level !== "debug";
-  const dispatchVariant = isObf ? (1 + Math.floor(rng() * 5)) : 0;
+  const forcedDv = process.env.FORCE_DV ? parseInt(process.env.FORCE_DV, 10) : 0;
+  const dispatchVariant = isObf ? (forcedDv >= 1 && forcedDv <= 6 ? forcedDv : 1 + Math.floor(rng() * 6)) : 0;
   const dispatchMask = isObf ? (1 + Math.floor(rng() * 254)) : 0;
   const rotSeed = isObf ? (1 + Math.floor(rng() * 254)) : 0;
   const rotStep = isObf ? (1 + Math.floor(rng() * 254)) : 0;
@@ -3414,7 +3468,7 @@ export function generateRegVM(chunk: RegBytecodeChunk, options: RegVMGenOptions 
     console.log(`[RegVM] Dead handler elimination: ${used.size}/${handlerRegistry.size} opcodes used`);
   }
 
-  const dvNames = ["flat","xor-masked","binary-tree","grouped","table-dispatch","table-xor"];
+  const dvNames = ["flat","xor-masked","binary-tree","grouped","table-dispatch","table-xor","closure-table"];
   if (level !== "debug") console.log(`[RegVM] Dispatch: variant ${dispatchVariant} (${dvNames[dispatchVariant] || "unknown"})`);
 
   const mappedCode = doShuffle ? mapRegBytecode(chunk.code, encode, ctx.argPerm) : chunk.code;
