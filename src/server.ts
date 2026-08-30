@@ -15,6 +15,8 @@ import { regCompile } from "./vm/RegCompiler.js";
 import { generateVM } from "./vm/vm-gen.js";
 import { generateRegVM } from "./vm/reg-vm-gen.js";
 import { generateAntiTamperPrelude } from "./obfuscator/AntiTamper.js";
+import * as KeyStore from "./keystore/KeyStore.js";
+import { generateLoader } from "./keystore/LoaderGenerator.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -249,6 +251,82 @@ app.post("/api/obfuscate", (req: express.Request, res: express.Response) => {
     console.error("Obfuscation error:", err);
     res.status(500).json({ error: `Server error: ${err.message}` });
   }
+});
+
+function requireAdmin(req: express.Request, res: express.Response): boolean {
+  const provided = req.header("X-Admin-Key");
+  const expected = process.env.ADMIN_KEY;
+  if (!expected) {
+    res.status(500).json({ error: "Server has no ADMIN_KEY configured." });
+    return false;
+  }
+  if (!provided || provided !== expected) {
+    res.status(401).json({ error: "Invalid or missing X-Admin-Key header." });
+    return false;
+  }
+  return true;
+}
+
+app.post("/api/admin/keys", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const { note, expiresInDays } = req.body || {};
+  const record = KeyStore.createKey({
+    note: typeof note === "string" ? note : undefined,
+    expiresInDays: typeof expiresInDays === "number" ? expiresInDays : undefined,
+  });
+  res.json({ key: record });
+});
+
+app.get("/api/admin/keys", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  res.json({ keys: KeyStore.listKeys() });
+});
+
+app.delete("/api/admin/keys/:key", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const ok = KeyStore.deleteKey(req.params.key);
+  if (!ok) return res.status(404).json({ error: "Key not found" }) as any;
+  res.json({ success: true });
+});
+
+app.post("/api/admin/keys/:key/revoke", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const ok = KeyStore.revokeKey(req.params.key);
+  if (!ok) return res.status(404).json({ error: "Key not found" }) as any;
+  res.json({ success: true });
+});
+
+app.post("/api/admin/keys/:key/reset-hwid", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const ok = KeyStore.resetHwid(req.params.key);
+  if (!ok) return res.status(404).json({ error: "Key not found" }) as any;
+  res.json({ success: true });
+});
+
+// Called from the Roblox loader script itself — no admin auth, since the
+// customer's game client calls this directly.
+app.post("/api/keys/check", (req: express.Request, res: express.Response) => {
+  const { key, hwid } = req.body || {};
+  if (typeof key !== "string" || typeof hwid !== "string") {
+    return res.status(400).json({ valid: false, reason: "BAD_REQUEST" }) as any;
+  }
+  const result = KeyStore.checkKey(key.trim(), hwid.trim());
+  res.json(result);
+});
+
+app.post("/api/loader/generate", (req: express.Request, res: express.Response) => {
+  const { scriptUrl, title, keyFileName } = req.body || {};
+  if (typeof scriptUrl !== "string" || scriptUrl.trim() === "") {
+    return res.status(400).json({ error: "Missing 'scriptUrl'" }) as any;
+  }
+  const checkUrl = `${req.protocol}://${req.get("host")}/api/keys/check`;
+  const loader = generateLoader({
+    title: typeof title === "string" && title.trim() ? title : "P20 Protected Script",
+    scriptUrl: scriptUrl.trim(),
+    checkUrl,
+    keyFileName: typeof keyFileName === "string" && keyFileName.trim() ? keyFileName : "p20_key.txt",
+  });
+  res.json({ loader, checkUrl });
 });
 
 app.post("/api/paste", async (req: express.Request, res: express.Response) => {
