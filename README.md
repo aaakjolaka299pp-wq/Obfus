@@ -1,334 +1,287 @@
-<div align="center">
+<div align="center">ZerServer
 
-# ZerServer
+Advanced Script Management & Protection Server
 
-**Advanced Luau Obfuscator with VM-Based Protection**
+A powerful server platform designed to manage, protect, and distribute Luau scripts with an integrated Key System, Obfuscator, Script Management, and Roblox Loader.
 
-A high-performance Luau obfuscation toolkit featuring full language support, multi-pass AST transformations, and dual virtual machine architectures for maximum code protection.
+""TypeScript" (https://img.shields.io/badge/TypeScript-5.3+-3178C6?style=flat-square&logo=typescript&logoColor=white)" (https://www.typescriptlang.org/)
+""Node.js" (https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)" (https://nodejs.org/)
+""License" (https://img.shields.io/badge/License-MIT-blue?style=flat-square)" (./LICENSE)
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](./LICENSE)
-[![Stars](https://img.shields.io/github/stars/sfr-development/Clyde-Luau-Obfuscator?style=flat-square)](https://github.com/sfr-development/Clyde-Luau-Obfuscator/stargazers)
+</div>---
 
-</div>
+Overview
 
----
+ZerServer is a centralized server platform for managing Luau scripts, access keys, and script distribution.
 
-## Overview
+The system is designed with multiple connected features that allow developers and administrators to manage their scripts from a single dashboard.
 
-Clyde is a from-scratch Luau obfuscator built entirely in TypeScript. It implements a complete **Lexer > Parser > AST > Obfuscator > VM** pipeline with no external parsing dependencies. Every stage — tokenization, full Luau grammar parsing (including type annotations), AST transformations, bytecode compilation, and VM code generation — is hand-written for maximum control and output quality.
+ZerServer includes a built-in Obfuscator, Key System, Script Manager, API, Roblox Loader, Settings, and Documentation.
 
-### Key Features
+Scripts and access data are managed through the server, allowing administrators to control which users and Roblox Place IDs can access specific scripts.
 
-- **Full Luau Support** — Complete lexer and parser covering the entire Luau grammar including type annotations, generics, if-else expressions, string interpolation, compound assignments, and `continue`
-- **Multi-Pass Obfuscation** — Identifier renaming, string encoding, and control flow scrambling applied as composable AST passes
-- **Dual VM Architectures** — Both stack-based and register-based virtual machines with configurable protection levels
-- **Web UI** — Built-in Express server with a browser-based interface for interactive obfuscation
-- **CLI Tools** — Scriptable command-line interface for batch processing and CI/CD integration
-- **Validation** — Pre-obfuscation syntax validation to catch errors early
+Key Features
 
----
-
-## Architecture
-
-### High-Level Pipeline
-
-```mermaid
-graph LR
-    A["Luau Source"] --> B["Lexer"]
-    B --> C["Parser"]
-    C --> D["AST Transforms"]
-    D --> E{"Output Mode"}
-    E -->|"Direct"| F["Printer"]
-    E -->|"Stack VM"| G["Stack Compiler"]
-    E -->|"Register VM"| H["Register Compiler"]
-    G --> I["VM Generator"]
-    H --> J["Reg-VM Generator"]
-    F --> K["Obfuscated Luau"]
-    I --> K
-    J --> K
-
-    style A fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style B fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style C fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style D fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style E fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style F fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style G fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style H fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style I fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style J fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style K fill:#0d3b0d,stroke:#66bb6a,color:#e0e0e0
-```
-
-### Obfuscation Passes
-
-```mermaid
-graph TD
-    AST["Parsed AST"] --> R{"Rename Locals?"}
-    R -->|Yes| REN["Identifier Renaming<br/><i>Scope-aware variable renaming</i>"]
-    R -->|No| SE
-    REN --> SE{"Encode Strings?"}
-    SE -->|Yes| STR["String Encoding<br/><i>XOR / dynamic decoding stubs</i>"]
-    SE -->|No| CF
-    STR --> CF{"Scramble Control Flow?"}
-    CF -->|Yes| CFS["Control Flow Scrambling<br/><i>Opaque predicates + dispatch tables</i>"]
-    CF -->|No| OUT["Transformed AST"]
-    CFS --> OUT
-
-    style AST fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style R fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style REN fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style SE fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style STR fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style CF fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style CFS fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style OUT fill:#0d3b0d,stroke:#66bb6a,color:#e0e0e0
-```
-
-### VM Compilation Flow
-
-```mermaid
-graph TD
-    A["Obfuscated AST"] --> B["Bytecode Compiler"]
-    B --> C["Instruction Stream<br/><i>opcodes + operands + constants</i>"]
-    C --> D{"VM Architecture"}
-    
-    D -->|"Stack-Based"| E["Stack VM Generator"]
-    D -->|"Register-Based"| F["Register VM Generator"]
-    
-    E --> G["Protection Level"]
-    F --> G
-    
-    G -->|"Debug"| H["Readable output<br/><i>named opcodes, comments</i>"]
-    G -->|"Normal"| I["Standard protection<br/><i>shuffled opcodes, encoded constants</i>"]
-    G -->|"Maximum"| J["Full protection<br/><i>polymorphic dispatch, LZMA compression</i>"]
-    
-    H --> K["Self-Contained Luau Script"]
-    I --> K
-    J --> K
-
-    style A fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style B fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style C fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style D fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style E fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style F fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style G fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style H fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style I fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style J fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style K fill:#0d3b0d,stroke:#66bb6a,color:#e0e0e0
-```
-
-### Project Structure
-
-```mermaid
-graph TD
-    ROOT["Clyde-Luau-Obfuscator/"] --> SRC["src/"]
-    ROOT --> PUB["public/"]
-    
-    SRC --> LEX["lexer/<br/><i>Tokenizer + token types</i>"]
-    SRC --> PAR["parser/<br/><i>Recursive descent parser + type parser</i>"]
-    SRC --> AST2["ast/<br/><i>AST node type definitions</i>"]
-    SRC --> OBF["obfuscator/<br/><i>Renamer, StringEncoder, ControlFlowScrambler, Printer</i>"]
-    SRC --> CMP["compiler/<br/><i>Luau syntax validator</i>"]
-    SRC --> VM["vm/<br/><i>Stack + Register compilers, VM generators, LZMA</i>"]
-    SRC --> CLI["cli/<br/><i>CLI entry points</i>"]
-    SRC --> SRV["server.ts<br/><i>Express API server</i>"]
-    
-    PUB --> HTML["index.html"]
-    PUB --> CSS["style.css"]
-    PUB --> JS["app.js"]
-
-    style ROOT fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style SRC fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style PUB fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style LEX fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style PAR fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style AST2 fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style OBF fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style CMP fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style VM fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style CLI fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style SRV fill:#0d2137,stroke:#81d4fa,color:#e0e0e0
-    style HTML fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style CSS fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-    style JS fill:#1a1a2e,stroke:#4fc3f7,color:#e0e0e0
-```
+- Obfuscator — Protect Luau scripts before distribution
+- Key System — Create and manage access keys
+- Place ID Protection — Connect keys and scripts to specific Place IDs
+- Script Management — Manage scripts, versions, and status
+- Roblox Loader — Connect Roblox scripts directly to ZerServer
+- Server-Side Storage — Keep managed scripts on the server
+- Access Control — Control access to scripts through the backend
+- Dashboard — Manage the entire system from one interface
+- API — Backend API for loader and external integrations
+- Settings — Configure ZerServer system options
+- Documentation — Built-in documentation for system integration
 
 ---
 
-## Getting Started
+Dashboard
 
-### Prerequisites
+ZerServer provides a centralized dashboard for managing the entire platform.
 
-- **Node.js** 18 or higher
-- **npm** 9 or higher
+The dashboard contains several separate sections:
 
-### Installation
+- Obfuscator
+- Key System
+- Scripts
+- Settings
+- Documentation
 
-```bash
-git clone https://github.com/sfr-development/Clyde-Luau-Obfuscator.git
-cd Clyde-Luau-Obfuscator
+Each section has its own purpose and management interface.
+
+---
+
+Obfuscator
+
+The Obfuscator allows developers to process their Luau scripts before storing or distributing them.
+
+Users can enter their script, configure the available protection options, and generate the protected output.
+
+The resulting script can then be connected to the ZerServer Script Manager and Roblox Loader.
+
+---
+
+Key System
+
+The Key System provides access control for ZerServer scripts.
+
+Administrators can create keys and assign them to specific scripts and Place IDs.
+
+Each key can have its own configuration such as:
+
+- Key status
+- Expiration
+- Script access
+- Place ID
+- Usage status
+- Activation state
+
+Example:
+
+Key: ZER-XXXX-XXXX
+Status: Active
+Script: Main
+Place ID: 123456789
+Expiration: 30 Days
+
+---
+
+Scripts
+
+The Scripts section is used to manage all scripts stored in ZerServer.
+
+Administrators can manage:
+
+- Script name
+- Script version
+- Script status
+- Connected Place IDs
+- Access keys
+- Script updates
+- Script delivery
+
+Example:
+
+Main Script
+Version: 1.0.0
+Status: Active
+
+Premium Script
+Version: 2.1.0
+Status: Active
+
+Test Script
+Version: 0.5.0
+Status: Disabled
+
+---
+
+Roblox Loader
+
+ZerServer can be connected to a Roblox Loader.
+
+The loader communicates with the ZerServer API to request the required script.
+
+The server can check the request before allowing script access.
+
+Roblox Loader
+      ↓
+ZerServer API
+      ↓
+Key Validation
+      ↓
+Place ID Validation
+      ↓
+Script Validation
+      ↓
+Script Delivery
+
+If the request does not meet the configured requirements, access can be denied.
+
+---
+
+API
+
+ZerServer provides an API for communication between the dashboard, Roblox Loader, and external services.
+
+Example API structure:
+
+/api/auth
+/api/keys
+/api/scripts
+/api/loader
+/api/settings
+/api/status
+
+The API can be used for:
+
+- Key validation
+- Script requests
+- Script management
+- Loader communication
+- System status
+- Authentication
+
+---
+
+Server Storage
+
+ZerServer uses server-side storage for managed scripts and system data.
+
+The general structure is:
+
+ZerServer
+│
+├── Dashboard
+│
+├── Key System
+│
+├── Obfuscator
+│
+├── Script Manager
+│
+├── API
+│
+└── Server Storage
+      │
+      ├── Scripts
+      ├── Keys
+      ├── Users
+      └── Configuration
+
+This allows the administrator to manage script access without placing all management logic directly inside the client.
+
+---
+
+Settings
+
+The Settings section provides configuration for the ZerServer system.
+
+Available settings may include:
+
+- Server configuration
+- API configuration
+- Key configuration
+- Script settings
+- Loader settings
+- Security configuration
+- Default system options
+
+---
+
+Documentation
+
+ZerServer includes documentation for developers and administrators.
+
+Documentation can cover:
+
+- API usage
+- Roblox Loader
+- Key System
+- Script Management
+- Authentication
+- Configuration
+- Integration
+
+---
+
+Getting Started
+
+Requirements
+
+- Node.js 18+
+- npm 9+
+- Database
+- Server environment
+
+Installation
+
+git clone <your-repository>
+cd ZerServer
 npm install
 npm run build
-```
 
-### Web UI
+Start Server
 
-Start the built-in server with live browser interface:
-
-```bash
 node dist/server.js
-```
 
-Open [http://localhost:3000](http://localhost:3000) to access the obfuscation dashboard.
-
-### CLI Usage
-
-**Obfuscate a file:**
-
-```bash
-npm run obfuscate -- input.lua
-```
-
-**Lex tokens:**
-
-```bash
-npm run lex -- input.lua
-```
-
-**Parse AST:**
-
-```bash
-npm run parse -- input.lua
-```
+Open the configured server address to access the ZerServer dashboard.
 
 ---
 
-## API Reference
+System Flow
 
-The Express server exposes two endpoints:
-
-### `POST /api/validate`
-
-Validates Luau source code for syntax errors.
-
-```json
-{
-  "code": "local x = 1 + 2"
-}
-```
-
-### `POST /api/obfuscate`
-
-Obfuscates Luau source code with configurable options.
-
-```json
-{
-  "code": "local function greet(name) print('Hello ' .. name) end",
-  "options": {
-    "noRename": false,
-    "noPreserve": false,
-    "encodeStrings": true,
-    "scramble": true,
-    "oneLine": false,
-    "vmType": "register",
-    "vmLevel": "normal"
-  }
-}
-```
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `noRename` | `boolean` | `false` | Skip identifier renaming |
-| `noPreserve` | `boolean` | `false` | Don't preserve Roblox globals |
-| `encodeStrings` | `boolean` | `false` | Enable string encoding pass |
-| `scramble` | `boolean` | `false` | Enable control flow scrambling |
-| `oneLine` | `boolean` | `false` | Minify output to a single line |
-| `vmType` | `string` | `"none"` | VM type: `"none"`, `"stack"`, or `"register"` |
-| `vmLevel` | `string` | `"normal"` | Protection level: `"debug"`, `"normal"`, or `"maximum"` |
+Developer
+    ↓
+ZerServer Dashboard
+    ↓
+Obfuscator
+    ↓
+Script Manager
+    ↓
+Server Storage
+    ↓
+Key System
+    ↓
+Roblox Loader
+    ↓
+ZerServer API
+    ↓
+Access Validation
+    ↓
+Script Delivery
 
 ---
 
-## Programmatic Usage
+License
 
-```typescript
-import { lex, parse, obfuscate, printChunk } from "clyde";
-import { compile } from "clyde/vm/Compiler";
-import { generateVM } from "clyde/vm/vm-gen";
-
-// Basic obfuscation
-const { tokens } = lex('local x = "hello world"');
-const ast = parse(tokens);
-const obfuscated = obfuscate(ast, { renameLocals: true, preserveGlobals: true });
-const output = printChunk(obfuscated);
-
-// VM-protected obfuscation
-const bytecode = compile(obfuscated);
-const vmOutput = generateVM(bytecode, { level: "normal" });
-```
+This project is licensed under the "MIT License" (./LICENSE).
 
 ---
 
-## How It Works
+<div align="center">ZerServer
 
-### 1. Lexer
+Script Protection • Key System • Script Management • Roblox Loader
 
-The lexer tokenizes raw Luau source into a stream of typed tokens. It handles all Luau-specific syntax including:
-- Long strings and comments (`[==[...]==]`)
-- String interpolation (`` `Hello {name}` ``)
-- Type annotation tokens (`::`, `->`, `?`)
-- Compound operators (`+=`, `-=`, `*=`, etc.)
-
-### 2. Parser
-
-A hand-written recursive descent parser converts the token stream into a complete AST. It supports:
-- Full statement and expression grammar
-- Type annotations with generics (`Array<{key: string}>`)
-- If-else expressions (`if cond then a else b`)
-- Type function statements
-- Export type declarations
-
-### 3. Obfuscation Passes
-
-| Pass | Module | Description |
-|------|--------|-------------|
-| **Identifier Renaming** | `Obfuscator.ts` | Scope-aware renaming of local variables, function parameters, and loop variables. Preserves Roblox globals by default. |
-| **String Encoding** | `StringEncoder.ts` | Replaces string literals with XOR-encoded equivalents and injects runtime decoding logic. |
-| **Control Flow Scrambling** | `ControlFlowScrambler.ts` | Restructures linear control flow into dispatch-table loops with opaque predicates. |
-
-### 4. Virtual Machines
-
-The VM layer compiles the obfuscated AST into bytecode and wraps it in a self-contained Luau script that executes at runtime:
-
-| Architecture | Compiler | Generator | Key Traits |
-|-------------|----------|-----------|------------|
-| **Stack-Based** | `Compiler.ts` | `vm-gen.ts` | Push/pop operand stack, simpler instruction set |
-| **Register-Based** | `RegCompiler.ts` | `reg-vm-gen.ts` | Register allocation, fewer instructions, polymorphic dispatch |
-
-Both VMs support three protection levels:
-
-- **Debug** — Readable output with named opcodes for development
-- **Normal** — Shuffled opcode mapping, encoded constants, flattened control flow
-- **Maximum** — Full polymorphic dispatch, LZMA-compressed bytecode, anti-tamper checks
-
----
-
-## Star History
-
-<a href="https://star-history.com/#sfr-development/Clyde-Luau-Obfuscator&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=sfr-development/Clyde-Luau-Obfuscator&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=sfr-development/Clyde-Luau-Obfuscator&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=sfr-development/Clyde-Luau-Obfuscator&type=Date" />
- </picture>
-</a>
-
----
-
-## License
-
-This project is licensed under the [MIT License](./LICENSE).
+</div>
