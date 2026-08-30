@@ -355,6 +355,49 @@ app.delete("/api/admin/scripts/:id", (req: express.Request, res: express.Respons
   res.json({ success: true });
 });
 
+app.post("/api/admin/scripts/:id/status", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const { status } = req.body || {};
+  if (status !== "enabled" && status !== "disabled") {
+    return res.status(400).json({ error: "status must be 'enabled' or 'disabled'" }) as any;
+  }
+  const meta = ScriptStore.setStatus(String(req.params.id), status);
+  if (!meta) return res.status(404).json({ error: "Script not found" }) as any;
+  res.json({ script: meta });
+});
+
+app.post("/api/admin/scripts/:id/places", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const { placeId } = req.body || {};
+  if (typeof placeId !== "string" || placeId.trim() === "") {
+    return res.status(400).json({ error: "Missing 'placeId'" }) as any;
+  }
+  const result = ScriptStore.addPlaceId(String(req.params.id), placeId.trim());
+  if (!result.success) {
+    if (result.error === "SCRIPT_NOT_FOUND") return res.status(404).json({ error: "Script not found" }) as any;
+    if (result.error === "ALREADY_ASSIGNED") {
+      return res.status(409).json({ error: `Place ID already assigned to "${result.owner?.title}"` }) as any;
+    }
+  }
+  res.json({ success: true });
+});
+
+app.delete("/api/admin/scripts/:id/places/:placeId", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const result = ScriptStore.removePlaceId(String(req.params.id), String(req.params.placeId));
+  if (!result.success) {
+    if (result.error === "SCRIPT_NOT_FOUND") return res.status(404).json({ error: "Script not found" }) as any;
+    return res.status(404).json({ error: "That Place ID isn't assigned to this script" }) as any;
+  }
+  res.json({ success: true });
+});
+
+app.get("/api/admin/places/:placeId", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const meta = ScriptStore.findScriptByPlaceId(String(req.params.placeId));
+  res.json({ script: meta || null });
+});
+
 app.post("/api/loader/generate", (req: express.Request, res: express.Response) => {
   const { scriptUrl, title, keyFileName } = req.body || {};
   if (typeof scriptUrl !== "string" || scriptUrl.trim() === "") {
