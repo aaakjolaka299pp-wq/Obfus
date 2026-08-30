@@ -3649,14 +3649,14 @@ export function generateVM(chunk: BytecodeChunk, options: VMGenOptions = {}): st
     const fpHex = fingerprint.toString(16).padStart(8, '0').toUpperCase();
 
     const artLines = [
-      `  #####    ####    ####  `,
-      `  #    #  #    #  #    # `,
-      `  #####       #   #    # `,
-      `  #          #    #    # `,
-      `  #      ######    ####  `,
+      `  ######   ######   ##### `,
+      `      ##   #        #    #`,
+      `     ##    #####    ##### `,
+      `    ##     #        #   # `,
+      `  ######   ######   #    #`,
       `                            `,
       ``,
-      `  By https://p20luaobfuscation.up.railway.app/ | P20LuaProtection`,
+      `  By https://p20luaobfuscation.up.railway.app/ | ZerLuaProtection`,
       `  build ${fpHex}`,
     ];
 

@@ -80,7 +80,7 @@ function obfuscateNum(n: number, rng: () => number): string {  n = n & 0xFF;
 }
 
 export function generateBootstrap(config: BootstrapConfig): string {
-  const { vmBlob, vmOrigLen, xorKey, invSbox, checksum, chunkName = "P20", rng } = config;
+  const { vmBlob, vmOrigLen, xorKey, invSbox, checksum, chunkName = "Zer", rng } = config;
 
   const charLit = (str: string, charFnName: string): string => {
     const codes = str.split("").map((c) => obfuscateNum(c.charCodeAt(0), rng)).join(",");
@@ -457,7 +457,7 @@ export function generateBootstrap(config: BootstrapConfig): string {
   ].join('\n') });
 
   cases.push({ id: stExec, code: [
-    `${nAssert}(${nOk} and ${nFn} and ${nType}(${nFn})=="function","P20 Protection v2")`,
+    `${nAssert}(${nOk} and ${nFn} and ${nType}(${nFn})=="function","Zer Protection v2")`,
     `${nResult}=${nFn}(...)`,
 
     `for _0i=1,256 do ${nSbox}[_0i]=0 end`,
