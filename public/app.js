@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: outputEditor.value,
-          title: "P20 Lua Obfuscated Script",
+          title: "Zer Lua Obfuscated Script",
           provider: optProvider.value
         })
       });
@@ -301,11 +301,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const ksBtnLoaderDownload = document.getElementById("ks-btn-loader-download");
 
   if (ksAdminKeyInput) {
-    const saved = localStorage.getItem("p20_admin_key");
+    const saved = localStorage.getItem("zer_admin_key");
     if (saved) ksAdminKeyInput.value = saved;
 
     ksAdminKeyInput.addEventListener("change", () => {
-      localStorage.setItem("p20_admin_key", ksAdminKeyInput.value);
+      localStorage.setItem("zer_admin_key", ksAdminKeyInput.value);
     });
 
     async function ksFetch(path, options = {}) {
