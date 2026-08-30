@@ -16,6 +16,7 @@ import { generateVM } from "./vm/vm-gen.js";
 import { generateRegVM } from "./vm/reg-vm-gen.js";
 import { generateAntiTamperPrelude } from "./obfuscator/AntiTamper.js";
 import * as KeyStore from "./keystore/KeyStore.js";
+import * as ScriptStore from "./keystore/ScriptStore.js";
 import { generateLoader } from "./keystore/LoaderGenerator.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -312,6 +313,46 @@ app.post("/api/keys/check", (req: express.Request, res: express.Response) => {
   }
   const result = KeyStore.checkKey(key.trim(), hwid.trim());
   res.json(result);
+});
+
+app.post("/api/admin/scripts", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const { title, source } = req.body || {};
+  if (typeof source !== "string" || source.trim() === "") {
+    return res.status(400).json({ error: "Missing 'source'" }) as any;
+  }
+  const record = ScriptStore.createScript(
+    typeof title === "string" && title.trim() ? title.trim() : "Untitled Script",
+    source
+  );
+  res.json({ script: record });
+});
+
+app.get("/api/admin/scripts", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  res.json({ scripts: ScriptStore.listScripts() });
+});
+
+app.get("/api/admin/scripts/:id", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const record = ScriptStore.getScript(String(req.params.id));
+  if (!record) return res.status(404).json({ error: "Script not found" }) as any;
+  res.json({ script: record });
+});
+
+app.put("/api/admin/scripts/:id", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const { title, source } = req.body || {};
+  const record = ScriptStore.updateScript(String(req.params.id), { title, source });
+  if (!record) return res.status(404).json({ error: "Script not found" }) as any;
+  res.json({ script: record });
+});
+
+app.delete("/api/admin/scripts/:id", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const ok = ScriptStore.deleteScript(String(req.params.id));
+  if (!ok) return res.status(404).json({ error: "Script not found" }) as any;
+  res.json({ success: true });
 });
 
 app.post("/api/loader/generate", (req: express.Request, res: express.Response) => {
