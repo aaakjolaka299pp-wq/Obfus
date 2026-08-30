@@ -1,5 +1,5 @@
 // KeyStore.ts
-// A minimal, file-backed key/license store for P20's key system.
+// A minimal, file-backed key/license store for Zer's key system.
 //
 // IMPORTANT: this file must live on a Railway Volume (persistent disk),
 // not the regular container filesystem — Railway's normal filesystem is
