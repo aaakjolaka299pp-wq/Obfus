@@ -446,7 +446,7 @@ export function encodeStrings(ast: Chunk, options: StringEncoderOptions = {}): C
 
   if (!enabled) return ast;
 
-  const decoderName = `_p20d_${Math.random().toString(36).substring(2, 8)}`;
+  const decoderName = `_zerd_${Math.random().toString(36).substring(2, 8)}`;
   const loc = ast.body[0]?.loc ?? { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 } };
   const decoders = makeDecoderStatements(loc, decoderName);
 
