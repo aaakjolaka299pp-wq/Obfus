@@ -3733,7 +3733,7 @@ export function generateRegVM(chunk: RegBytecodeChunk, options: RegVMGenOptions 
       xorKey,
       invSbox,
       checksum,
-      chunkName: "P20",
+      chunkName: "Zer",
       rng,
     });
     console.log(`[RegVM] Blob: final output = ${output.length} chars`);
@@ -3741,14 +3741,14 @@ export function generateRegVM(chunk: RegBytecodeChunk, options: RegVMGenOptions 
 
   if (!options._noWatermark) {
     const art = [
-      `#####    ####    ####  `,
-      `#    #  #    #  #    # `,
-      `#####       #   #    # `,
-      `#          #    #    # `,
-      `#      ######    ####  `,
+      `######   ######   ##### `,
+      `    ##   #        #    #`,
+      `   ##    #####    ##### `,
+      `  ##     #        #   # `,
+      `######   ######   #    #`,
       `                          `,
       ``,
-      `By https://p20luaobfuscation.up.railway.app/ | P20LuaProtection Just like VMProtect, but for Lua.`,
+      `By https://zerserver.up.railway.app/ | ZerLuaProtection Just like VMProtect, but for Lua.`,
     ];
     output = `--[[\n${art.join('\n')}\n]]\n` + output;
   }

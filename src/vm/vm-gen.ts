@@ -3656,7 +3656,7 @@ export function generateVM(chunk: BytecodeChunk, options: VMGenOptions = {}): st
       `  ######   ######   #    #`,
       `                            `,
       ``,
-      `  By https://p20luaobfuscation.up.railway.app/ | ZerLuaProtection`,
+      `  By https://zerserver.up.railway.app/ | ZerLuaProtection`,
       `  build ${fpHex}`,
     ];
 
