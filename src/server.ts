@@ -284,21 +284,21 @@ app.get("/api/admin/keys", (req: express.Request, res: express.Response) => {
 
 app.delete("/api/admin/keys/:key", (req: express.Request, res: express.Response) => {
   if (!requireAdmin(req, res)) return;
-  const ok = KeyStore.deleteKey(req.params.key);
+  const ok = KeyStore.deleteKey(String(req.params.key));
   if (!ok) return res.status(404).json({ error: "Key not found" }) as any;
   res.json({ success: true });
 });
 
 app.post("/api/admin/keys/:key/revoke", (req: express.Request, res: express.Response) => {
   if (!requireAdmin(req, res)) return;
-  const ok = KeyStore.revokeKey(req.params.key);
+  const ok = KeyStore.revokeKey(String(req.params.key));
   if (!ok) return res.status(404).json({ error: "Key not found" }) as any;
   res.json({ success: true });
 });
 
 app.post("/api/admin/keys/:key/reset-hwid", (req: express.Request, res: express.Response) => {
   if (!requireAdmin(req, res)) return;
-  const ok = KeyStore.resetHwid(req.params.key);
+  const ok = KeyStore.resetHwid(String(req.params.key));
   if (!ok) return res.status(404).json({ error: "Key not found" }) as any;
   res.json({ success: true });
 });
