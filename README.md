@@ -1,38 +1,44 @@
-<div align="center">ZerServer
+<div align="center">
 
-Advanced Script Management & Protection Server
+# ZerServer
+
+**Advanced Script Management & Protection Server**
 
 A powerful server platform designed to manage, protect, and distribute Luau scripts with an integrated Key System, Obfuscator, Script Management, and Roblox Loader.
 
-""TypeScript" (https://img.shields.io/badge/TypeScript-5.3+-3178C6?style=flat-square&logo=typescript&logoColor=white)" (https://www.typescriptlang.org/)
-""Node.js" (https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)" (https://nodejs.org/)
-""License" (https://img.shields.io/badge/License-MIT-blue?style=flat-square)" (./LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](./LICENSE)
 
-</div>---
+</div>
 
-Overview
+---
+
+## Overview
 
 ZerServer is a centralized server platform for managing Luau scripts, access keys, and script distribution.
 
 The system is designed with multiple connected features that allow developers and administrators to manage their scripts from a single dashboard.
 
-ZerServer includes a built-in Obfuscator, Key System, Script Manager, API, Roblox Loader, Settings, and Documentation.
+ZerServer includes a built-in **Obfuscator, Key System, Script Manager, API, Roblox Loader, Settings, and Documentation.**
 
 Scripts and access data are managed through the server, allowing administrators to control which users and Roblox Place IDs can access specific scripts.
 
+### Key Features
+
+- **Obfuscator** — Protect Luau scripts before distribution
+- **Key System** — Create and manage access keys
+- **Place ID Protection** — Connect keys and scripts to specific Place IDs
+- **Script Management** — Manage scripts, versions, and status
+- **Roblox Loader** — Connect Roblox scripts directly to ZerServer
+- **Server-Side Storage** — Keep managed scripts on the server
+- **Access Control** — Control access to scripts through the backend
+- **Dashboard** — Manage the entire system from one interface
+- **API** — Backend API for loader and external integrations
+- **Settings** — Configure ZerServer system options
+- **Documentation** — Built-in documentation for system integration
 Key Features
 
-- Obfuscator — Protect Luau scripts before distribution
-- Key System — Create and manage access keys
-- Place ID Protection — Connect keys and scripts to specific Place IDs
-- Script Management — Manage scripts, versions, and status
-- Roblox Loader — Connect Roblox scripts directly to ZerServer
-- Server-Side Storage — Keep managed scripts on the server
-- Access Control — Control access to scripts through the backend
-- Dashboard — Manage the entire system from one interface
-- API — Backend API for loader and external integrations
-- Settings — Configure ZerServer system options
-- Documentation — Built-in documentation for system integration
 
 ---
 
