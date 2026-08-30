@@ -232,6 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
       btnCopy.disabled = false;
       btnDownload.disabled = false;
       btnShare.disabled = false;
+      btnSaveScript.disabled = false;
 
       setRailState("success");
 
@@ -241,6 +242,7 @@ document.addEventListener("DOMContentLoaded", () => {
       btnCopy.disabled = true;
       btnDownload.disabled = true;
       btnShare.disabled = true;
+      btnSaveScript.disabled = true;
       setRailState("error");
     } finally {
       btnText.innerText = originalBtnText;
@@ -323,6 +325,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const settingsStatus = document.getElementById("settings-status");
   const settingsBtnLogout = document.getElementById("settings-btn-logout");
 
+  const scriptsGate = document.getElementById("scripts-gate");
+  const scriptsContent = document.getElementById("scripts-content");
+  const scriptsBtnRefresh = document.getElementById("scripts-btn-refresh");
+  const scriptsList = document.getElementById("scripts-list");
+  const scriptsNewTitle = document.getElementById("scripts-new-title");
+  const scriptsNewSource = document.getElementById("scripts-new-source");
+  const scriptsBtnSave = document.getElementById("scripts-btn-save");
+  const btnSaveScript = document.getElementById("btn-save-script");
+
   let ksAccessKey = null;
 
   async function ksFetch(path, options = {}) {
@@ -342,12 +353,16 @@ document.addEventListener("DOMContentLoaded", () => {
   function showKeySystemLocked() {
     ksGate.style.display = "";
     ksContent.style.display = "none";
+    scriptsGate.style.display = "";
+    scriptsContent.style.display = "none";
     if (settingsStatus) settingsStatus.innerText = "Key System: locked";
   }
 
   function showKeySystemUnlocked() {
     ksGate.style.display = "none";
     ksContent.style.display = "";
+    scriptsGate.style.display = "none";
+    scriptsContent.style.display = "";
     if (settingsStatus) settingsStatus.innerText = "Key System: unlocked";
   }
 
@@ -364,6 +379,7 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("zer_admin_key", key);
       showKeySystemUnlocked();
       renderKeys(data.keys || []);
+      loadScripts();
     } catch (err) {
       ksAccessKey = null;
       ksGateError.innerText = "Invalid access key.";
@@ -490,6 +506,99 @@ document.addEventListener("DOMContentLoaded", () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  });
+
+  // --- Scripts (private storage; same access key as Key System) ---
+
+  function renderScripts(scripts) {
+    if (!scripts.length) {
+      scriptsList.innerHTML = `<div style="color:var(--muted)">No scripts saved yet.</div>`;
+      return;
+    }
+    scriptsList.innerHTML = scripts.map(s => {
+      const kb = (s.size / 1024).toFixed(1);
+      const updated = new Date(s.updatedAt).toLocaleString();
+      return `
+        <div style="border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+            <span>${s.title}</span>
+            <span style="color:var(--muted)">${kb} KB</span>
+          </div>
+          <div style="color:var(--muted); margin-top:4px;">${s.id} · updated ${updated}</div>
+          <div class="stage-actions" style="margin-top:8px;">
+            <button class="btn btn-ghost scripts-view" data-id="${s.id}" style="font-size:11px; padding:6px 10px;">Copy Source</button>
+            <button class="btn btn-ghost scripts-delete" data-id="${s.id}" style="font-size:11px; padding:6px 10px;">Delete</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    scriptsList.querySelectorAll(".scripts-view").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        try {
+          const data = await ksFetch(`/api/admin/scripts/${btn.dataset.id}`);
+          await navigator.clipboard.writeText(data.script.source).catch(() => {});
+          showToast("Script source copied to clipboard", "success");
+        } catch (err) { showToast(err.message, "error"); }
+      });
+    });
+    scriptsList.querySelectorAll(".scripts-delete").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        try {
+          await ksFetch(`/api/admin/scripts/${btn.dataset.id}`, { method: "DELETE" });
+          await loadScripts();
+        } catch (err) { showToast(err.message, "error"); }
+      });
+    });
+  }
+
+  async function loadScripts() {
+    try {
+      const data = await ksFetch("/api/admin/scripts");
+      renderScripts(data.scripts || []);
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  }
+
+  scriptsBtnRefresh.addEventListener("click", loadScripts);
+
+  scriptsBtnSave.addEventListener("click", async () => {
+    const source = scriptsNewSource.value.trim();
+    if (!source) {
+      showToast("Paste a script first", "error");
+      return;
+    }
+    try {
+      await ksFetch("/api/admin/scripts", {
+        method: "POST",
+        body: JSON.stringify({ title: scriptsNewTitle.value.trim(), source }),
+      });
+      scriptsNewTitle.value = "";
+      scriptsNewSource.value = "";
+      showToast("Script saved", "success");
+      await loadScripts();
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  });
+
+  btnSaveScript.addEventListener("click", async () => {
+    if (outputEditor.value.trim() === "") return;
+    if (!ksAccessKey) {
+      showToast("Unlock the Key System tab first", "error");
+      document.querySelector('.tab-btn[data-tab="keysystem"]').click();
+      return;
+    }
+    try {
+      await ksFetch("/api/admin/scripts", {
+        method: "POST",
+        body: JSON.stringify({ title: "Obfuscator output", source: outputEditor.value }),
+      });
+      showToast("Saved to Scripts", "success");
+    } catch (err) {
+      showToast(err.message, "error");
+    }
   });
 
   // Auto-unlock silently if we already have a verified key from before

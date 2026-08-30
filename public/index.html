@@ -173,6 +173,9 @@ print("Square of 5 is: " .. tostring(square(5)))</textarea>
               <span id="share-text">Share link</span>
             </button>
           </div>
+          <div class="stage-actions" style="margin-top: 8px;">
+            <button id="btn-save-script" class="btn btn-ghost" disabled>Save to Scripts</button>
+          </div>
         </section>
 
       </main>
@@ -235,13 +238,41 @@ print("Square of 5 is: " .. tostring(square(5)))</textarea>
       </div>
     </section>
 
-    <!-- ===================== TAB: SCRIPTS (placeholder) ===================== -->
+    <!-- ===================== TAB: SCRIPTS (protected) ===================== -->
     <section class="tab-panel" id="tab-scripts" role="tabpanel">
-      <div class="stage">
+
+      <div class="stage" id="scripts-gate">
+        <div class="stage-head">
+          <h2 class="stage-title">Access Key required</h2>
+        </div>
+        <p style="color: var(--muted); font-size: 13.5px;">Unlock the Key System tab first — Scripts uses the same access key.</p>
+      </div>
+
+      <div class="stage" id="scripts-content" style="display:none;">
         <div class="stage-head">
           <h2 class="stage-title">Scripts</h2>
         </div>
-        <p style="color: var(--muted); font-size: 13.5px;">Not built yet. This tab will hold private server-side storage for your obfuscated scripts, with Place ID mapping so one script can serve multiple games — coming in a later phase.</p>
+        <p style="color: var(--muted); font-size: 13px; margin-bottom: 12px;">Obfuscated scripts stored privately on the server. Nothing here is reachable by a public URL yet — that comes once the Loader Key System (Phase 4) can check a key before serving anything.</p>
+
+        <div class="stage-actions">
+          <button id="scripts-btn-refresh" class="btn btn-ghost">Refresh List</button>
+        </div>
+
+        <div id="scripts-list" style="margin-top: 14px; font-family: var(--font-mono); font-size: 12.5px;"></div>
+
+        <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);">
+          <div class="stage-title" style="margin-bottom: 10px;">New Script</div>
+          <div class="select-list">
+            <label class="select-row">
+              <span class="select-row-label">Title</span>
+              <input type="text" id="scripts-new-title" class="select-input" placeholder="My protected script">
+            </label>
+          </div>
+          <textarea id="scripts-new-source" class="code-area" style="margin-top: 10px; min-height: 120px;" placeholder="-- Paste obfuscated Lua here, or use 'Save to Scripts' from the Obfuscator tab"></textarea>
+          <div class="stage-actions" style="margin-top: 10px;">
+            <button id="scripts-btn-save" class="btn btn-primary">Save Script</button>
+          </div>
+        </div>
       </div>
     </section>
 
