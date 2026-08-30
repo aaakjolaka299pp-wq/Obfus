@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=2.1.0">
-  <script src="app.js?v=2.1.0" defer></script>
+  <link rel="stylesheet" href="style.css?v=2.2.0">
+  <script src="app.js?v=2.2.0" defer></script>
 </head>
 <body>
 
@@ -24,19 +24,29 @@
 
     <div class="signal-rail" id="signal-rail" aria-hidden="true"></div>
 
-    <main class="pipeline">
+    <nav class="tab-bar" role="tablist" aria-label="Sections">
+      <button class="tab-btn is-active" data-tab="obfuscator" role="tab" aria-selected="true">Obfuscator</button>
+      <button class="tab-btn" data-tab="keysystem" role="tab" aria-selected="false">Key System</button>
+      <button class="tab-btn" data-tab="scripts" role="tab" aria-selected="false">Scripts</button>
+      <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false">Settings</button>
+      <button class="tab-btn" data-tab="docs" role="tab" aria-selected="false">Documentation</button>
+    </nav>
 
-      <section class="stage" aria-labelledby="stage-source-title">
-        <div class="stage-head">
-          <span class="stage-eyebrow">01</span>
-          <h2 id="stage-source-title" class="stage-title">Source</h2>
-          <div class="stage-status" id="validation-status">
-            <span class="status-dot" id="indicator"></span>
-            <span id="status-title">Ready</span>
+    <!-- ===================== TAB: OBFUSCATOR (public) ===================== -->
+    <section class="tab-panel is-active" id="tab-obfuscator" role="tabpanel">
+      <main class="pipeline">
+
+        <section class="stage" aria-labelledby="stage-source-title">
+          <div class="stage-head">
+            <span class="stage-eyebrow">01</span>
+            <h2 id="stage-source-title" class="stage-title">Source</h2>
+            <div class="stage-status" id="validation-status">
+              <span class="status-dot" id="indicator"></span>
+              <span id="status-title">Ready</span>
+            </div>
           </div>
-        </div>
 
-        <textarea id="input-editor" class="code-area" spellcheck="false" placeholder="-- Paste your Luau source here...&#10;&#10;local x = 42&#10;print('Hello World')">-- Zer Lua Obfuscator
+          <textarea id="input-editor" class="code-area" spellcheck="false" placeholder="-- Paste your Luau source here...&#10;&#10;local x = 42&#10;print('Hello World')">-- Zer Lua Obfuscator
 -- Press "Obfuscate script" to protect this example.
 
 local message = "Hello, world!"
@@ -48,184 +58,237 @@ end
 
 print("Square of 5 is: " .. tostring(square(5)))</textarea>
 
+          <div class="stage-actions">
+            <input type="file" id="file-input" accept=".lua,.luau,.txt" hidden>
+            <button id="btn-upload" class="btn btn-ghost">Upload file</button>
+          </div>
+        </section>
+
+        <section class="stage" aria-labelledby="stage-protect-title">
+          <div class="stage-head">
+            <span class="stage-eyebrow">02</span>
+            <h2 id="stage-protect-title" class="stage-title">Protection</h2>
+          </div>
+
+          <div class="toggle-list">
+            <label class="toggle-row">
+              <input type="checkbox" id="opt-rename" checked>
+              <span class="toggle-copy">
+                <span class="toggle-title">Rename variables</span>
+                <span class="toggle-desc">Scrambles local names into short identifiers.</span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <input type="checkbox" id="opt-preserve" checked>
+              <span class="toggle-copy">
+                <span class="toggle-title">Protect Roblox globals</span>
+                <span class="toggle-desc">Keeps game APIs and engine indices untouched.</span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <input type="checkbox" id="opt-encode" checked>
+              <span class="toggle-copy">
+                <span class="toggle-title">Encrypt strings</span>
+                <span class="toggle-desc">Converts plain text strings into byte arrays.</span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <input type="checkbox" id="opt-scramble" checked>
+              <span class="toggle-copy">
+                <span class="toggle-title">Scramble control flow</span>
+                <span class="toggle-desc">Injects opaque conditions and junk branches.</span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <input type="checkbox" id="opt-oneline">
+              <span class="toggle-copy">
+                <span class="toggle-title">Minify code</span>
+                <span class="toggle-desc">Strips comments, whitespace, and newlines.</span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <input type="checkbox" id="opt-antitamper">
+              <span class="toggle-copy">
+                <span class="toggle-title">Anti-tamper protection</span>
+                <span class="toggle-desc">Detects hooked functions and debugger timing, halts on tampering. May false-positive on some executors.</span>
+              </span>
+            </label>
+          </div>
+
+          <div class="select-list">
+            <label class="select-row">
+              <span class="select-row-label">VM architecture</span>
+              <select id="opt-vm-type" class="select-input">
+                <option value="none">None — standard obfuscation</option>
+                <option value="register" selected>Register-based VM</option>
+                <option value="stack">Stack-based VM</option>
+              </select>
+            </label>
+
+            <label class="select-row">
+              <span class="select-row-label">Hardening grade</span>
+              <select id="opt-vm-level" class="select-input">
+                <option value="max" selected>Max — LZSS, anti-dump, S-box cipher</option>
+                <option value="normal">Normal — XOR table, instruction shuffling</option>
+                <option value="debug">Debug — readable VM for stack tracing</option>
+              </select>
+            </label>
+          </div>
+
+          <button id="btn-obfuscate" class="btn btn-primary btn-run">
+            <span class="btn-text">Obfuscate script</span>
+            <span class="btn-loader hidden" aria-hidden="true"></span>
+          </button>
+        </section>
+
+        <section class="stage" aria-labelledby="stage-output-title">
+          <div class="stage-head">
+            <span class="stage-eyebrow">03</span>
+            <h2 id="stage-output-title" class="stage-title">Output</h2>
+          </div>
+
+          <textarea id="output-editor" class="code-area" readonly placeholder="-- Your protected script will appear here..."></textarea>
+
+          <div class="select-list" style="margin-top: 12px;">
+            <label class="select-row">
+              <span class="select-row-label">Share via</span>
+              <select id="opt-provider" class="select-input">
+                <option value="rubis" selected>Rubiš</option>
+                <option value="pastebin">Pastebin</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="stage-actions stage-actions-triple">
+            <button id="btn-copy" class="btn btn-ghost" disabled>
+              <span id="copy-text">Copy</span>
+            </button>
+            <button id="btn-download" class="btn btn-ghost" disabled>Download</button>
+            <button id="btn-share" class="btn btn-primary" disabled>
+              <span id="share-text">Share link</span>
+            </button>
+          </div>
+        </section>
+
+      </main>
+    </section>
+
+    <!-- ===================== TAB: KEY SYSTEM (protected) ===================== -->
+    <section class="tab-panel" id="tab-keysystem" role="tabpanel">
+
+      <div class="stage" id="ks-gate">
+        <div class="stage-head">
+          <h2 class="stage-title">Access Key required</h2>
+        </div>
+        <p style="color: var(--muted); font-size: 13.5px; margin-bottom: 12px;">This section is protected. Enter your access key to continue.</p>
+        <div class="select-list">
+          <label class="select-row">
+            <span class="select-row-label">Access key</span>
+            <input type="password" id="ks-gate-input" class="select-input" placeholder="Your ADMIN_KEY from Railway">
+          </label>
+        </div>
+        <div class="stage-actions" style="margin-top: 10px;">
+          <button id="ks-gate-submit" class="btn btn-primary">Unlock</button>
+        </div>
+        <div id="ks-gate-error" style="color: var(--warn); font-size: 12.5px; margin-top: 8px;"></div>
+      </div>
+
+      <div class="stage" id="ks-content" style="display:none;">
+        <div class="stage-head">
+          <h2 class="stage-title">Key System</h2>
+        </div>
+
         <div class="stage-actions">
-          <input type="file" id="file-input" accept=".lua,.luau,.txt" hidden>
-          <button id="btn-upload" class="btn btn-ghost">Upload file</button>
-        </div>
-      </section>
-
-      <section class="stage" aria-labelledby="stage-protect-title">
-        <div class="stage-head">
-          <span class="stage-eyebrow">02</span>
-          <h2 id="stage-protect-title" class="stage-title">Protection</h2>
+          <button id="ks-btn-create" class="btn btn-primary">Create Key</button>
+          <button id="ks-btn-refresh" class="btn btn-ghost">Refresh List</button>
+          <button id="ks-btn-logout" class="btn btn-ghost">Lock</button>
         </div>
 
-        <div class="toggle-list">
-          <label class="toggle-row">
-            <input type="checkbox" id="opt-rename" checked>
-            <span class="toggle-copy">
-              <span class="toggle-title">Rename variables</span>
-              <span class="toggle-desc">Scrambles local names into short identifiers.</span>
-            </span>
-          </label>
+        <div id="ks-list" style="margin-top: 14px; font-family: var(--font-mono); font-size: 12.5px;"></div>
 
-          <label class="toggle-row">
-            <input type="checkbox" id="opt-preserve" checked>
-            <span class="toggle-copy">
-              <span class="toggle-title">Protect Roblox globals</span>
-              <span class="toggle-desc">Keeps game APIs and engine indices untouched.</span>
-            </span>
-          </label>
-
-          <label class="toggle-row">
-            <input type="checkbox" id="opt-encode" checked>
-            <span class="toggle-copy">
-              <span class="toggle-title">Encrypt strings</span>
-              <span class="toggle-desc">Converts plain text strings into byte arrays.</span>
-            </span>
-          </label>
-
-          <label class="toggle-row">
-            <input type="checkbox" id="opt-scramble" checked>
-            <span class="toggle-copy">
-              <span class="toggle-title">Scramble control flow</span>
-              <span class="toggle-desc">Injects opaque conditions and junk branches.</span>
-            </span>
-          </label>
-
-          <label class="toggle-row">
-            <input type="checkbox" id="opt-oneline">
-            <span class="toggle-copy">
-              <span class="toggle-title">Minify code</span>
-              <span class="toggle-desc">Strips comments, whitespace, and newlines.</span>
-            </span>
-          </label>
-
-          <label class="toggle-row">
-            <input type="checkbox" id="opt-antitamper">
-            <span class="toggle-copy">
-              <span class="toggle-title">Anti-tamper protection</span>
-              <span class="toggle-desc">Detects hooked functions and debugger timing, halts on tampering. May false-positive on some executors.</span>
-            </span>
-          </label>
-        </div>
-
-        <div class="select-list">
-          <label class="select-row">
-            <span class="select-row-label">VM architecture</span>
-            <select id="opt-vm-type" class="select-input">
-              <option value="none">None — standard obfuscation</option>
-              <option value="register" selected>Register-based VM</option>
-              <option value="stack">Stack-based VM</option>
-            </select>
-          </label>
-
-          <label class="select-row">
-            <span class="select-row-label">Hardening grade</span>
-            <select id="opt-vm-level" class="select-input">
-              <option value="max" selected>Max — LZSS, anti-dump, S-box cipher</option>
-              <option value="normal">Normal — XOR table, instruction shuffling</option>
-              <option value="debug">Debug — readable VM for stack tracing</option>
-            </select>
-          </label>
-        </div>
-
-        <button id="btn-obfuscate" class="btn btn-primary btn-run">
-          <span class="btn-text">Obfuscate script</span>
-          <span class="btn-loader hidden" aria-hidden="true"></span>
-        </button>
-      </section>
-
-      <section class="stage" aria-labelledby="stage-output-title">
-        <div class="stage-head">
-          <span class="stage-eyebrow">03</span>
-          <h2 id="stage-output-title" class="stage-title">Output</h2>
-        </div>
-
-        <textarea id="output-editor" class="code-area" readonly placeholder="-- Your protected script will appear here..."></textarea>
-
-        <div class="select-list" style="margin-top: 12px;">
-          <label class="select-row">
-            <span class="select-row-label">Share via</span>
-            <select id="opt-provider" class="select-input">
-              <option value="rubis" selected>Rubiš</option>
-              <option value="pastebin">Pastebin</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="stage-actions stage-actions-triple">
-          <button id="btn-copy" class="btn btn-ghost" disabled>
-            <span id="copy-text">Copy</span>
-          </button>
-          <button id="btn-download" class="btn btn-ghost" disabled>Download</button>
-          <button id="btn-share" class="btn btn-primary" disabled>
-            <span id="share-text">Share link</span>
-          </button>
-        </div>
-      </section>
-
-    </main>
-
-    <section class="stage" aria-labelledby="keysystem-title" style="margin-top: 22px;">
-      <div class="stage-head">
-        <h2 id="keysystem-title" class="stage-title">Key System</h2>
-      </div>
-
-      <div class="select-list">
-        <label class="select-row">
-          <span class="select-row-label">Admin key</span>
-          <input type="password" id="ks-admin-key" class="select-input" placeholder="Your ADMIN_KEY from Railway">
-        </label>
-      </div>
-
-      <div class="stage-actions" style="margin-top: 10px;">
-        <button id="ks-btn-create" class="btn btn-primary">Create Key</button>
-        <button id="ks-btn-refresh" class="btn btn-ghost">Refresh List</button>
-      </div>
-
-      <div id="ks-list" style="margin-top: 14px; font-family: var(--font-mono); font-size: 12.5px;"></div>
-
-      <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);">
-        <div class="stage-title" style="margin-bottom: 10px;">Generate Loader</div>
-        <div class="select-list">
-          <label class="select-row">
-            <span class="select-row-label">Loader title</span>
-            <input type="text" id="ks-loader-title" class="select-input" placeholder="Zer Protected Script">
-          </label>
-          <label class="select-row">
-            <span class="select-row-label">Obfuscated script URL (raw link)</span>
-            <input type="text" id="ks-loader-url" class="select-input" placeholder="https://api.rubis.app/v2/scrap/.../raw">
-          </label>
-        </div>
-        <div class="stage-actions" style="margin-top: 10px;">
-          <button id="ks-btn-loader" class="btn btn-primary">Generate Loader</button>
-        </div>
-        <textarea id="ks-loader-output" class="code-area" readonly style="margin-top: 12px; min-height: 120px;" placeholder="-- Generated loader will appear here..."></textarea>
-        <div class="stage-actions" style="margin-top: 10px;">
-          <button id="ks-btn-loader-copy" class="btn btn-ghost" disabled>Copy</button>
-          <button id="ks-btn-loader-download" class="btn btn-ghost" disabled>Download</button>
+        <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);">
+          <div class="stage-title" style="margin-bottom: 10px;">Generate Loader</div>
+          <div class="select-list">
+            <label class="select-row">
+              <span class="select-row-label">Loader title</span>
+              <input type="text" id="ks-loader-title" class="select-input" placeholder="Zer Protected Script">
+            </label>
+            <label class="select-row">
+              <span class="select-row-label">Obfuscated script URL (raw link)</span>
+              <input type="text" id="ks-loader-url" class="select-input" placeholder="https://api.rubis.app/v2/scrap/.../raw">
+            </label>
+          </div>
+          <div class="stage-actions" style="margin-top: 10px;">
+            <button id="ks-btn-loader" class="btn btn-primary">Generate Loader</button>
+          </div>
+          <textarea id="ks-loader-output" class="code-area" readonly style="margin-top: 12px; min-height: 120px;" placeholder="-- Generated loader will appear here..."></textarea>
+          <div class="stage-actions" style="margin-top: 10px;">
+            <button id="ks-btn-loader-copy" class="btn btn-ghost" disabled>Copy</button>
+            <button id="ks-btn-loader-download" class="btn btn-ghost" disabled>Download</button>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="about">
-      <h2 class="about-title">About Zer</h2>
-
-      <div class="about-item">
-        <h3>What does this do?</h3>
-        <p>Zer rewrites your Luau source so it still runs exactly the same, but is much harder for anyone else to read or reverse-engineer. Variable names get scrambled, strings get encrypted, and — if you turn on virtualization — your logic compiles down to bytecode that runs on a custom VM embedded in the output.</p>
+    <!-- ===================== TAB: SCRIPTS (placeholder) ===================== -->
+    <section class="tab-panel" id="tab-scripts" role="tabpanel">
+      <div class="stage">
+        <div class="stage-head">
+          <h2 class="stage-title">Scripts</h2>
+        </div>
+        <p style="color: var(--muted); font-size: 13.5px;">Not built yet. This tab will hold private server-side storage for your obfuscated scripts, with Place ID mapping so one script can serve multiple games — coming in a later phase.</p>
       </div>
+    </section>
 
-      <div class="about-item">
-        <h3>Will it change how my script runs?</h3>
-        <p>No. Obfuscation only changes the shape of the code, not its behavior. Roblox globals stay untouched by default so your game APIs keep working.</p>
+    <!-- ===================== TAB: SETTINGS ===================== -->
+    <section class="tab-panel" id="tab-settings" role="tabpanel">
+      <div class="stage">
+        <div class="stage-head">
+          <h2 class="stage-title">Settings</h2>
+        </div>
+        <p style="color: var(--muted); font-size: 13.5px; margin-bottom: 12px;" id="settings-status">Key System: locked</p>
+        <div class="stage-actions">
+          <button id="settings-btn-logout" class="btn btn-ghost">Lock Key System</button>
+        </div>
+        <p style="color: var(--muted); font-size: 12.5px; margin-top: 16px;">Get Key provider configuration (Linkvertise / LootLabs) will live here once the Loader Key System ships.</p>
       </div>
+    </section>
 
-      <div class="about-item">
-        <h3>Is this unbreakable?</h3>
-        <p>No obfuscator is. Virtualization at the Max hardening grade makes static analysis and deobfuscation significantly harder, but a determined reverse-engineer can still work through it given enough time.</p>
-      </div>
+    <!-- ===================== TAB: DOCUMENTATION ===================== -->
+    <section class="tab-panel" id="tab-docs" role="tabpanel">
+      <section class="about">
+        <h2 class="about-title">Using Zer</h2>
+
+        <div class="about-item">
+          <h3>Obfuscator</h3>
+          <p>Paste or upload a Luau script, choose your protection options, and press Obfuscate. The output can be copied, downloaded, or shared to Rubiš/Pastebin directly from the same tab. No access key needed — this tab is open to anyone.</p>
+        </div>
+
+        <div class="about-item">
+          <h3>Key System</h3>
+          <p>Protected with an access key (the same value as your server's ADMIN_KEY). Unlock it once and the browser remembers you — you won't be asked again unless you press Lock. From here you can issue license keys and generate a Roblox loader script that checks a key before running your obfuscated payload.</p>
+        </div>
+
+        <div class="about-item">
+          <h3>What does obfuscation do?</h3>
+          <p>Zer rewrites your Luau source so it still runs exactly the same, but is much harder for anyone else to read or reverse-engineer. Variable names get scrambled, strings get encrypted, and — if you turn on virtualization — your logic compiles down to bytecode that runs on a custom VM embedded in the output.</p>
+        </div>
+
+        <div class="about-item">
+          <h3>Will it change how my script runs?</h3>
+          <p>No. Obfuscation only changes the shape of the code, not its behavior. Roblox globals stay untouched by default so your game APIs keep working.</p>
+        </div>
+
+        <div class="about-item">
+          <h3>Is this unbreakable?</h3>
+          <p>No obfuscator is. Virtualization at the Max hardening grade makes static analysis and deobfuscation significantly harder, but a determined reverse-engineer can still work through it given enough time.</p>
+        </div>
+      </section>
     </section>
 
   </div>
