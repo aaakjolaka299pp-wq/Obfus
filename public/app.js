@@ -286,4 +286,155 @@ document.addEventListener("DOMContentLoaded", () => {
     toast.classList.add("toast-leaving");
     setTimeout(() => toast.remove(), 180);
   }
+
+  // --- Key System ---
+
+  const ksAdminKeyInput = document.getElementById("ks-admin-key");
+  const ksBtnCreate = document.getElementById("ks-btn-create");
+  const ksBtnRefresh = document.getElementById("ks-btn-refresh");
+  const ksList = document.getElementById("ks-list");
+  const ksLoaderTitle = document.getElementById("ks-loader-title");
+  const ksLoaderUrl = document.getElementById("ks-loader-url");
+  const ksBtnLoader = document.getElementById("ks-btn-loader");
+  const ksLoaderOutput = document.getElementById("ks-loader-output");
+  const ksBtnLoaderCopy = document.getElementById("ks-btn-loader-copy");
+  const ksBtnLoaderDownload = document.getElementById("ks-btn-loader-download");
+
+  if (ksAdminKeyInput) {
+    const saved = localStorage.getItem("p20_admin_key");
+    if (saved) ksAdminKeyInput.value = saved;
+
+    ksAdminKeyInput.addEventListener("change", () => {
+      localStorage.setItem("p20_admin_key", ksAdminKeyInput.value);
+    });
+
+    async function ksFetch(path, options = {}) {
+      const adminKey = ksAdminKeyInput.value.trim();
+      const res = await fetch(path, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Admin-Key": adminKey,
+          ...(options.headers || {}),
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      return data;
+    }
+
+    function renderKeys(keys) {
+      if (!keys.length) {
+        ksList.innerHTML = `<div style="color:var(--muted)">No keys yet.</div>`;
+        return;
+      }
+      ksList.innerHTML = keys.map(k => {
+        const status = k.revoked ? "REVOKED" : (k.expiresAt && Date.now() > k.expiresAt ? "EXPIRED" : "ACTIVE");
+        const statusColor = status === "ACTIVE" ? "var(--ok)" : "var(--warn)";
+        return `
+          <div style="border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+              <span>${k.key}</span>
+              <span style="color:${statusColor}">${status}</span>
+            </div>
+            <div style="color:var(--muted); margin-top:4px;">HWID: ${k.hwid || "not bound yet"}${k.note ? " · " + k.note : ""}</div>
+            <div class="stage-actions" style="margin-top:8px;">
+              <button class="btn btn-ghost ks-revoke" data-key="${k.key}" style="font-size:11px; padding:6px 10px;">Revoke</button>
+              <button class="btn btn-ghost ks-reset" data-key="${k.key}" style="font-size:11px; padding:6px 10px;">Reset HWID</button>
+              <button class="btn btn-ghost ks-delete" data-key="${k.key}" style="font-size:11px; padding:6px 10px;">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      ksList.querySelectorAll(".ks-revoke").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          try {
+            await ksFetch(`/api/admin/keys/${btn.dataset.key}/revoke`, { method: "POST" });
+            await loadKeys();
+          } catch (err) { showToast(err.message, "error"); }
+        });
+      });
+      ksList.querySelectorAll(".ks-reset").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          try {
+            await ksFetch(`/api/admin/keys/${btn.dataset.key}/reset-hwid`, { method: "POST" });
+            await loadKeys();
+          } catch (err) { showToast(err.message, "error"); }
+        });
+      });
+      ksList.querySelectorAll(".ks-delete").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          try {
+            await ksFetch(`/api/admin/keys/${btn.dataset.key}`, { method: "DELETE" });
+            await loadKeys();
+          } catch (err) { showToast(err.message, "error"); }
+        });
+      });
+    }
+
+    async function loadKeys() {
+      try {
+        const data = await ksFetch("/api/admin/keys");
+        renderKeys(data.keys || []);
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    }
+
+    ksBtnCreate.addEventListener("click", async () => {
+      try {
+        const data = await ksFetch("/api/admin/keys", { method: "POST", body: JSON.stringify({}) });
+        await navigator.clipboard.writeText(data.key.key).catch(() => {});
+        showToast(`Key created & copied: ${data.key.key}`, "success");
+        await loadKeys();
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    });
+
+    ksBtnRefresh.addEventListener("click", loadKeys);
+
+    ksBtnLoader.addEventListener("click", async () => {
+      const scriptUrl = ksLoaderUrl.value.trim();
+      if (!scriptUrl) {
+        showToast("Enter the obfuscated script's raw URL first", "error");
+        return;
+      }
+      try {
+        const res = await fetch("/api/loader/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scriptUrl, title: ksLoaderTitle.value.trim() }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to generate loader");
+        ksLoaderOutput.value = data.loader;
+        ksBtnLoaderCopy.disabled = false;
+        ksBtnLoaderDownload.disabled = false;
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    });
+
+    ksBtnLoaderCopy.addEventListener("click", () => {
+      navigator.clipboard.writeText(ksLoaderOutput.value).then(() => {
+        showToast("Loader copied to clipboard", "success");
+      }).catch(err => showToast(err.message, "error"));
+    });
+
+    ksBtnLoaderDownload.addEventListener("click", () => {
+      const blob = new Blob([ksLoaderOutput.value], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "loader.lua";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    if (ksAdminKeyInput.value) loadKeys();
+  }
 });
