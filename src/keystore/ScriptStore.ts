@@ -16,6 +16,8 @@ export interface ScriptMeta {
   createdAt: number;
   updatedAt: number;
   size: number;
+  placeIds: string[];
+  status: "enabled" | "disabled";
 }
 
 export interface ScriptRecord extends ScriptMeta {
@@ -33,7 +35,13 @@ function loadIndex(): Record<string, ScriptMeta> {
   ensureDir();
   if (!existsSync(INDEX_PATH)) return {};
   try {
-    return JSON.parse(readFileSync(INDEX_PATH, "utf-8"));
+    const parsed = JSON.parse(readFileSync(INDEX_PATH, "utf-8"));
+    // Backfill fields for records saved before placeIds/status existed.
+    for (const key of Object.keys(parsed)) {
+      if (!Array.isArray(parsed[key].placeIds)) parsed[key].placeIds = [];
+      if (!parsed[key].status) parsed[key].status = "enabled";
+    }
+    return parsed;
   } catch (err) {
     console.error("[ScriptStore] Failed to read index, starting empty:", err);
     return {};
@@ -57,7 +65,12 @@ export function createScript(title: string, source: string): ScriptRecord {
   ensureDir();
   const id = randomId();
   const now = Date.now();
-  const meta: ScriptMeta = { id, title, createdAt: now, updatedAt: now, size: Buffer.byteLength(source, "utf-8") };
+  const meta: ScriptMeta = {
+    id, title, createdAt: now, updatedAt: now,
+    size: Buffer.byteLength(source, "utf-8"),
+    placeIds: [],
+    status: "enabled",
+  };
 
   writeFileSync(sourcePath(id), source, "utf-8");
   const index = loadIndex();
@@ -114,4 +127,62 @@ export function deleteScript(id: string): boolean {
     console.error("[ScriptStore] Failed to delete source file:", err);
   }
   return true;
+}
+
+export function setStatus(id: string, status: "enabled" | "disabled"): ScriptMeta | null {
+  const index = loadIndex();
+  const meta = index[id];
+  if (!meta) return null;
+  meta.status = status;
+  meta.updatedAt = Date.now();
+  saveIndex(index);
+  return meta;
+}
+
+export interface PlaceIdResult {
+  success: boolean;
+  error?: "ALREADY_ASSIGNED" | "SCRIPT_NOT_FOUND" | "NOT_ASSIGNED";
+  owner?: ScriptMeta;
+}
+
+// A Place ID may belong to exactly one script at a time. Returns which
+// script (if any) currently owns it.
+export function findScriptByPlaceId(placeId: string): ScriptMeta | null {
+  const index = loadIndex();
+  for (const meta of Object.values(index)) {
+    if (meta.placeIds.includes(placeId)) return meta;
+  }
+  return null;
+}
+
+export function addPlaceId(scriptId: string, placeId: string): PlaceIdResult {
+  const index = loadIndex();
+  const meta = index[scriptId];
+  if (!meta) return { success: false, error: "SCRIPT_NOT_FOUND" };
+
+  const existingOwner = findScriptByPlaceId(placeId);
+  if (existingOwner && existingOwner.id !== scriptId) {
+    return { success: false, error: "ALREADY_ASSIGNED", owner: existingOwner };
+  }
+
+  if (!meta.placeIds.includes(placeId)) {
+    meta.placeIds.push(placeId);
+    meta.updatedAt = Date.now();
+    saveIndex(index);
+  }
+  return { success: true };
+}
+
+export function removePlaceId(scriptId: string, placeId: string): PlaceIdResult {
+  const index = loadIndex();
+  const meta = index[scriptId];
+  if (!meta) return { success: false, error: "SCRIPT_NOT_FOUND" };
+
+  const before = meta.placeIds.length;
+  meta.placeIds = meta.placeIds.filter((p) => p !== placeId);
+  if (meta.placeIds.length === before) return { success: false, error: "NOT_ASSIGNED" };
+
+  meta.updatedAt = Date.now();
+  saveIndex(index);
+  return { success: true };
 }
