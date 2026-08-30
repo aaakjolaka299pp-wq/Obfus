@@ -518,15 +518,31 @@ document.addEventListener("DOMContentLoaded", () => {
     scriptsList.innerHTML = scripts.map(s => {
       const kb = (s.size / 1024).toFixed(1);
       const updated = new Date(s.updatedAt).toLocaleString();
+      const statusColor = s.status === "enabled" ? "var(--ok)" : "var(--warn)";
+      const placeChips = (s.placeIds || []).map(pid => `
+        <span style="display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:6px; padding:3px 8px; margin:3px 4px 0 0; font-size:11px;">
+          ${pid}
+          <button class="scripts-remove-place" data-id="${s.id}" data-place="${pid}" style="background:none; border:none; color:var(--warn); cursor:pointer; padding:0; font-size:13px; line-height:1;">×</button>
+        </span>
+      `).join("") || `<span style="color:var(--muted); font-size:12px;">No Place IDs assigned</span>`;
+
       return `
         <div style="border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px;">
           <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
             <span>${s.title}</span>
-            <span style="color:var(--muted)">${kb} KB</span>
+            <span style="color:${statusColor}">${s.status.toUpperCase()}</span>
           </div>
-          <div style="color:var(--muted); margin-top:4px;">${s.id} · updated ${updated}</div>
+          <div style="color:var(--muted); margin-top:4px;">${s.id} · ${kb} KB · updated ${updated}</div>
+
+          <div style="margin-top:8px;">${placeChips}</div>
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <input type="text" class="select-input scripts-place-input" data-id="${s.id}" placeholder="Place ID" style="font-size:12px; padding:6px 8px;">
+            <button class="btn btn-ghost scripts-add-place" data-id="${s.id}" style="font-size:11px; padding:6px 10px; flex-shrink:0;">Add</button>
+          </div>
+
           <div class="stage-actions" style="margin-top:8px;">
             <button class="btn btn-ghost scripts-view" data-id="${s.id}" style="font-size:11px; padding:6px 10px;">Copy Source</button>
+            <button class="btn btn-ghost scripts-toggle" data-id="${s.id}" data-status="${s.status}" style="font-size:11px; padding:6px 10px;">${s.status === "enabled" ? "Disable" : "Enable"}</button>
             <button class="btn btn-ghost scripts-delete" data-id="${s.id}" style="font-size:11px; padding:6px 10px;">Delete</button>
           </div>
         </div>
@@ -546,6 +562,40 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.addEventListener("click", async () => {
         try {
           await ksFetch(`/api/admin/scripts/${btn.dataset.id}`, { method: "DELETE" });
+          await loadScripts();
+        } catch (err) { showToast(err.message, "error"); }
+      });
+    });
+    scriptsList.querySelectorAll(".scripts-toggle").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const next = btn.dataset.status === "enabled" ? "disabled" : "enabled";
+        try {
+          await ksFetch(`/api/admin/scripts/${btn.dataset.id}/status`, {
+            method: "POST",
+            body: JSON.stringify({ status: next }),
+          });
+          await loadScripts();
+        } catch (err) { showToast(err.message, "error"); }
+      });
+    });
+    scriptsList.querySelectorAll(".scripts-add-place").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const input = scriptsList.querySelector(`.scripts-place-input[data-id="${btn.dataset.id}"]`);
+        const placeId = input.value.trim();
+        if (!placeId) return;
+        try {
+          await ksFetch(`/api/admin/scripts/${btn.dataset.id}/places`, {
+            method: "POST",
+            body: JSON.stringify({ placeId }),
+          });
+          await loadScripts();
+        } catch (err) { showToast(err.message, "error"); }
+      });
+    });
+    scriptsList.querySelectorAll(".scripts-remove-place").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        try {
+          await ksFetch(`/api/admin/scripts/${btn.dataset.id}/places/${encodeURIComponent(btn.dataset.place)}`, { method: "DELETE" });
           await loadScripts();
         } catch (err) { showToast(err.message, "error"); }
       });
