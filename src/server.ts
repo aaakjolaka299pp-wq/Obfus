@@ -29,6 +29,19 @@ const PASTEBIN_API_KEY = process.env.PASTEBIN_API_KEY;
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
+// --- Basic in-memory rate limiter for the public /api/access endpoint ---
+// Not a substitute for a real rate-limiting service, but enough to blunt
+// naive brute-force key guessing without adding a dependency.
+const rateLimitHits: Map<string, number[]> = new Map();
+
+function isRateLimited(ip: string, maxRequests: number, windowMs: number): boolean {
+  const now = Date.now();
+  const hits = (rateLimitHits.get(ip) || []).filter((t) => now - t < windowMs);
+  hits.push(now);
+  rateLimitHits.set(ip, hits);
+  return hits.length > maxRequests;
+}
+
 async function uploadToRubis(content: string, title: string): Promise<{ url: string }> {
   const query = new URLSearchParams({ title, public: "true" });
 
@@ -270,10 +283,11 @@ function requireAdmin(req: express.Request, res: express.Response): boolean {
 
 app.post("/api/admin/keys", (req: express.Request, res: express.Response) => {
   if (!requireAdmin(req, res)) return;
-  const { note, expiresInDays } = req.body || {};
+  const { note, expiresInDays, scriptId } = req.body || {};
   const record = KeyStore.createKey({
     note: typeof note === "string" ? note : undefined,
     expiresInDays: typeof expiresInDays === "number" ? expiresInDays : undefined,
+    scriptId: typeof scriptId === "string" && scriptId.trim() ? scriptId.trim() : null,
   });
   res.json({ key: record });
 });
@@ -313,6 +327,43 @@ app.post("/api/keys/check", (req: express.Request, res: express.Response) => {
   }
   const result = KeyStore.checkKey(key.trim(), hwid.trim());
   res.json(result);
+});
+
+// The core secure-delivery endpoint: Place ID + Key + HWID in, obfuscated
+// source out — but ONLY once everything checks out. This is the only way
+// the loader ever receives the actual script; there is no separate raw
+// URL to fetch it from.
+app.post("/api/access", (req: express.Request, res: express.Response) => {
+  const ip = req.ip || req.socket.remoteAddress || "unknown";
+  if (isRateLimited(ip, 10, 60_000)) {
+    return res.status(429).json({ valid: false, reason: "RATE_LIMITED" }) as any;
+  }
+
+  const { key, hwid, placeId } = req.body || {};
+  if (typeof key !== "string" || typeof hwid !== "string" || typeof placeId !== "string") {
+    return res.status(400).json({ valid: false, reason: "BAD_REQUEST" }) as any;
+  }
+
+  const script = ScriptStore.findScriptByPlaceId(placeId.trim());
+  if (!script) {
+    return res.status(404).json({ valid: false, reason: "PLACE_NOT_SUPPORTED" }) as any;
+  }
+  if (script.status !== "enabled") {
+    return res.status(403).json({ valid: false, reason: "SCRIPT_DISABLED" }) as any;
+  }
+
+  const result = KeyStore.checkKey(key.trim(), hwid.trim(), script.id);
+  if (!result.valid) {
+    return res.status(403).json({ valid: false, reason: result.reason }) as any;
+  }
+
+  const full = ScriptStore.getScript(script.id);
+  if (!full) {
+    return res.status(500).json({ valid: false, reason: "SCRIPT_MISSING" }) as any;
+  }
+
+  console.log(`[API] /api/access - granted script "${script.title}" for place ${placeId}`);
+  res.json({ valid: true, source: full.source });
 });
 
 app.post("/api/admin/scripts", (req: express.Request, res: express.Response) => {
@@ -399,18 +450,14 @@ app.get("/api/admin/places/:placeId", (req: express.Request, res: express.Respon
 });
 
 app.post("/api/loader/generate", (req: express.Request, res: express.Response) => {
-  const { scriptUrl, title, keyFileName } = req.body || {};
-  if (typeof scriptUrl !== "string" || scriptUrl.trim() === "") {
-    return res.status(400).json({ error: "Missing 'scriptUrl'" }) as any;
-  }
-  const checkUrl = `${req.protocol}://${req.get("host")}/api/keys/check`;
+  const { title, keyFileName } = req.body || {};
+  const accessUrl = `${req.protocol}://${req.get("host")}/api/access`;
   const loader = generateLoader({
     title: typeof title === "string" && title.trim() ? title : "Zer Protected Script",
-    scriptUrl: scriptUrl.trim(),
-    checkUrl,
+    accessUrl,
     keyFileName: typeof keyFileName === "string" && keyFileName.trim() ? keyFileName : "zer_key.txt",
   });
-  res.json({ loader, checkUrl });
+  res.json({ loader, accessUrl });
 });
 
 app.post("/api/paste", async (req: express.Request, res: express.Response) => {
