@@ -283,11 +283,12 @@ function requireAdmin(req: express.Request, res: express.Response): boolean {
 
 app.post("/api/admin/keys", (req: express.Request, res: express.Response) => {
   if (!requireAdmin(req, res)) return;
-  const { note, expiresInDays, scriptId } = req.body || {};
+  const { note, expiresInDays, scriptId, hwidLimit } = req.body || {};
   const record = KeyStore.createKey({
     note: typeof note === "string" ? note : undefined,
     expiresInDays: typeof expiresInDays === "number" ? expiresInDays : undefined,
     scriptId: typeof scriptId === "string" && scriptId.trim() ? scriptId.trim() : null,
+    hwidLimit: hwidLimit === null ? null : (typeof hwidLimit === "number" ? hwidLimit : undefined),
   });
   res.json({ key: record });
 });
@@ -314,6 +315,41 @@ app.post("/api/admin/keys/:key/revoke", (req: express.Request, res: express.Resp
 app.post("/api/admin/keys/:key/reset-hwid", (req: express.Request, res: express.Response) => {
   if (!requireAdmin(req, res)) return;
   const ok = KeyStore.resetHwid(String(req.params.key));
+  if (!ok) return res.status(404).json({ error: "Key not found" }) as any;
+  res.json({ success: true });
+});
+
+app.post("/api/admin/keys/:key/hwid", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const { hwid } = req.body || {};
+  if (typeof hwid !== "string" || !hwid.trim()) {
+    return res.status(400).json({ error: "Missing 'hwid'" }) as any;
+  }
+  const result = KeyStore.addHwid(String(req.params.key), hwid.trim());
+  if (!result.success) {
+    if (result.reason === "NOT_FOUND") return res.status(404).json({ error: "Key not found" }) as any;
+    return res.status(409).json({ error: "HWID limit reached for this key" }) as any;
+  }
+  res.json({ success: true });
+});
+
+app.delete("/api/admin/keys/:key/hwid/:hwid", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const result = KeyStore.removeHwid(String(req.params.key), String(req.params.hwid));
+  if (!result.success) {
+    if (result.reason === "NOT_FOUND") return res.status(404).json({ error: "Key not found" }) as any;
+    return res.status(404).json({ error: "That HWID isn't bound to this key" }) as any;
+  }
+  res.json({ success: true });
+});
+
+app.post("/api/admin/keys/:key/hwid-limit", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const { limit } = req.body || {};
+  if (limit !== null && typeof limit !== "number") {
+    return res.status(400).json({ error: "'limit' must be a number or null" }) as any;
+  }
+  const ok = KeyStore.setHwidLimit(String(req.params.key), limit);
   if (!ok) return res.status(404).json({ error: "Key not found" }) as any;
   res.json({ success: true });
 });
