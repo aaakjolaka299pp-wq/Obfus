@@ -317,6 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const ksBtnLogout = document.getElementById("ks-btn-logout");
   const ksList = document.getElementById("ks-list");
   const ksLoaderTitle = document.getElementById("ks-loader-title");
+  const ksLoaderScript = document.getElementById("ks-loader-script");
   const ksBtnLoader = document.getElementById("ks-btn-loader");
   const ksLoaderOutput = document.getElementById("ks-loader-output");
   const ksBtnLoaderCopy = document.getElementById("ks-btn-loader-copy");
@@ -404,22 +405,119 @@ document.addEventListener("DOMContentLoaded", () => {
     ksList.innerHTML = keys.map(k => {
       const status = k.revoked ? "REVOKED" : (k.expiresAt && Date.now() > k.expiresAt ? "EXPIRED" : "ACTIVE");
       const statusColor = status === "ACTIVE" ? "var(--ok)" : "var(--warn)";
+      const limitText = k.hwidLimit === null ? "unlimited" : k.hwidLimit;
       return `
         <div style="border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px;">
-          <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-            <span>${k.key}</span>
-            <span style="color:${statusColor}">${status}</span>
+          <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:center;">
+            <span style="word-break:break-all;">${k.key}</span>
+            <span style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+              <button class="ks-copy-key" data-key="${k.key}" style="background:none; border:none; color:var(--signal); cursor:pointer; font-size:11px; padding:0;">Copy</button>
+              <span style="color:${statusColor}">${status}</span>
+            </span>
           </div>
-          <div style="color:var(--muted); margin-top:4px;">HWID: ${k.hwid || "not bound yet"}${k.note ? " · " + k.note : ""}</div>
-          <div style="color:var(--muted); margin-top:2px;">Script: ${k.scriptId || "any"} · Uses: ${k.uses || 0}</div>
+          <div style="color:var(--muted); margin-top:4px;">${k.note ? k.note + " · " : ""}Script: ${k.scriptId || "any"} · Uses: ${k.uses || 0}</div>
+
+          <button class="btn btn-ghost ks-toggle-hwid" data-key="${k.key}" style="font-size:11px; padding:6px 10px; margin-top:8px;">
+            HWIDs: ${k.hwids.length}/${limitText}
+          </button>
+
+          <div class="ks-hwid-panel" data-key="${k.key}" style="display:none; margin-top:8px; padding:10px; border:1px solid var(--line); border-radius:6px;">
+            <div class="ks-hwid-items"></div>
+            <div style="display:flex; gap:6px; margin-top:8px;">
+              <input type="text" class="select-input ks-hwid-add-input" data-key="${k.key}" placeholder="Add HWID manually" style="font-size:12px; padding:6px 8px;">
+              <button class="btn btn-ghost ks-hwid-add" data-key="${k.key}" style="font-size:11px; padding:6px 10px; flex-shrink:0;">Add</button>
+            </div>
+            <div style="display:flex; gap:6px; margin-top:8px; align-items:center;">
+              <span style="font-size:11px; color:var(--muted); flex-shrink:0;">Limit:</span>
+              <input type="number" class="select-input ks-hwid-limit-input" data-key="${k.key}" value="${k.hwidLimit === null ? '' : k.hwidLimit}" placeholder="unlimited" min="0" style="font-size:12px; padding:6px 8px;">
+              <button class="btn btn-ghost ks-hwid-limit-save" data-key="${k.key}" style="font-size:11px; padding:6px 10px; flex-shrink:0;">Save</button>
+            </div>
+          </div>
+
           <div class="stage-actions" style="margin-top:8px;">
             <button class="btn btn-ghost ks-revoke" data-key="${k.key}" style="font-size:11px; padding:6px 10px;">Revoke</button>
-            <button class="btn btn-ghost ks-reset" data-key="${k.key}" style="font-size:11px; padding:6px 10px;">Reset HWID</button>
+            <button class="btn btn-ghost ks-reset" data-key="${k.key}" style="font-size:11px; padding:6px 10px;">Reset all HWIDs</button>
             <button class="btn btn-ghost ks-delete" data-key="${k.key}" style="font-size:11px; padding:6px 10px;">Delete</button>
           </div>
         </div>
       `;
     }).join("");
+
+    const keysById = {};
+    keys.forEach(k => keysById[k.key] = k);
+
+    function renderHwidItems(panel, keyStr) {
+      const k = keysById[keyStr];
+      const container = panel.querySelector(".ks-hwid-items");
+      if (!k.hwids.length) {
+        container.innerHTML = `<div style="color:var(--muted); font-size:12px;">No devices bound yet.</div>`;
+        return;
+      }
+      container.innerHTML = k.hwids.map(h => `
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--line); font-size:12px;">
+          <span style="word-break:break-all;">${h}</span>
+          <span style="display:flex; gap:8px; flex-shrink:0;">
+            <button class="ks-hwid-copy" data-hwid="${h}" style="background:none; border:none; color:var(--signal); cursor:pointer; font-size:11px; padding:0;">Copy</button>
+            <button class="ks-hwid-remove" data-key="${keyStr}" data-hwid="${h}" style="background:none; border:none; color:var(--warn); cursor:pointer; font-size:11px; padding:0;">Remove</button>
+          </span>
+        </div>
+      `).join("");
+
+      container.querySelectorAll(".ks-hwid-copy").forEach(btn => {
+        btn.addEventListener("click", () => {
+          navigator.clipboard.writeText(btn.dataset.hwid).then(() => showToast("HWID copied", "success"));
+        });
+      });
+      container.querySelectorAll(".ks-hwid-remove").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          try {
+            await ksFetch(`/api/admin/keys/${btn.dataset.key}/hwid/${encodeURIComponent(btn.dataset.hwid)}`, { method: "DELETE" });
+            await loadKeys();
+          } catch (err) { showToast(err.message, "error"); }
+        });
+      });
+    }
+
+    ksList.querySelectorAll(".ks-copy-key").forEach(btn => {
+      btn.addEventListener("click", () => {
+        navigator.clipboard.writeText(btn.dataset.key).then(() => showToast("Key copied", "success"));
+      });
+    });
+
+    ksList.querySelectorAll(".ks-toggle-hwid").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const panel = ksList.querySelector(`.ks-hwid-panel[data-key="${btn.dataset.key}"]`);
+        const isOpen = panel.style.display !== "none";
+        panel.style.display = isOpen ? "none" : "";
+        if (!isOpen) renderHwidItems(panel, btn.dataset.key);
+      });
+    });
+
+    ksList.querySelectorAll(".ks-hwid-add").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const input = ksList.querySelector(`.ks-hwid-add-input[data-key="${btn.dataset.key}"]`);
+        const hwid = input.value.trim();
+        if (!hwid) return;
+        try {
+          await ksFetch(`/api/admin/keys/${btn.dataset.key}/hwid`, { method: "POST", body: JSON.stringify({ hwid }) });
+          input.value = "";
+          await loadKeys();
+        } catch (err) { showToast(err.message, "error"); }
+      });
+    });
+
+    ksList.querySelectorAll(".ks-hwid-limit-save").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const input = ksList.querySelector(`.ks-hwid-limit-input[data-key="${btn.dataset.key}"]`);
+        const raw = input.value.trim();
+        const limit = raw === "" ? null : parseInt(raw, 10);
+        try {
+          await ksFetch(`/api/admin/keys/${btn.dataset.key}/hwid-limit`, { method: "POST", body: JSON.stringify({ limit }) });
+          showToast("HWID limit updated", "success");
+          await loadKeys();
+        } catch (err) { showToast(err.message, "error"); }
+      });
+    });
 
     ksList.querySelectorAll(".ks-revoke").forEach(btn => {
       btn.addEventListener("click", async () => {
@@ -456,10 +554,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  const ksNewKeyHwidLimit = document.getElementById("ks-new-key-hwidlimit");
+
   ksBtnCreate.addEventListener("click", async () => {
     try {
       const scriptId = ksNewKeyScript.value || undefined;
-      const data = await ksFetch("/api/admin/keys", { method: "POST", body: JSON.stringify({ scriptId }) });
+      const rawLimit = ksNewKeyHwidLimit.value.trim();
+      const hwidLimit = rawLimit === "" ? null : parseInt(rawLimit, 10);
+      const data = await ksFetch("/api/admin/keys", { method: "POST", body: JSON.stringify({ scriptId, hwidLimit }) });
       await navigator.clipboard.writeText(data.key.key).catch(() => {});
       showToast(`Key created & copied: ${data.key.key}`, "success");
       await loadKeys();
@@ -539,6 +641,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <div class="stage-actions" style="margin-top:8px;">
             <button class="btn btn-ghost scripts-view" data-id="${s.id}" style="font-size:11px; padding:6px 10px;">Copy Source</button>
+            <button class="btn btn-ghost scripts-rename" data-id="${s.id}" data-title="${s.title.replace(/"/g, '&quot;')}" style="font-size:11px; padding:6px 10px;">Rename</button>
             <button class="btn btn-ghost scripts-toggle" data-id="${s.id}" data-status="${s.status}" style="font-size:11px; padding:6px 10px;">${s.status === "enabled" ? "Disable" : "Enable"}</button>
             <button class="btn btn-ghost scripts-delete" data-id="${s.id}" style="font-size:11px; padding:6px 10px;">Delete</button>
           </div>
@@ -552,6 +655,20 @@ document.addEventListener("DOMContentLoaded", () => {
           const data = await ksFetch(`/api/admin/scripts/${btn.dataset.id}`);
           await navigator.clipboard.writeText(data.script.source).catch(() => {});
           showToast("Script source copied to clipboard", "success");
+        } catch (err) { showToast(err.message, "error"); }
+      });
+    });
+    scriptsList.querySelectorAll(".scripts-rename").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const newTitle = prompt("New title:", btn.dataset.title);
+        if (!newTitle || !newTitle.trim() || newTitle.trim() === btn.dataset.title) return;
+        try {
+          await ksFetch(`/api/admin/scripts/${btn.dataset.id}`, {
+            method: "PUT",
+            body: JSON.stringify({ title: newTitle.trim() }),
+          });
+          showToast("Script renamed", "success");
+          await loadScripts();
         } catch (err) { showToast(err.message, "error"); }
       });
     });
@@ -609,10 +726,22 @@ document.addEventListener("DOMContentLoaded", () => {
       ksNewKeyScript.innerHTML = `<option value="">Any script</option>` +
         scripts.map(s => `<option value="${s.id}">${s.title} (${s.id})</option>`).join("");
       ksNewKeyScript.value = currentValue;
+
+      const currentLoaderValue = ksLoaderScript.value;
+      ksLoaderScript.innerHTML = `<option value="">— none —</option>` +
+        scripts.map(s => `<option value="${s.id}">${s.title}</option>`).join("");
+      ksLoaderScript.value = currentLoaderValue;
     } catch (err) {
       showToast(err.message, "error");
     }
   }
+
+  ksLoaderScript.addEventListener("change", () => {
+    const selected = ksLoaderScript.selectedOptions[0];
+    if (selected && selected.value) {
+      ksLoaderTitle.value = selected.textContent;
+    }
+  });
 
   scriptsBtnRefresh.addEventListener("click", loadScripts);
 

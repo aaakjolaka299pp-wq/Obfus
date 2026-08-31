@@ -213,6 +213,10 @@ print("Square of 5 is: " .. tostring(square(5)))</textarea>
               <option value="">Any script</option>
             </select>
           </label>
+          <label class="select-row">
+            <span class="select-row-label">HWID limit (empty = unlimited)</span>
+            <input type="number" id="ks-new-key-hwidlimit" class="select-input" placeholder="1" min="0">
+          </label>
         </div>
         <div class="stage-actions" style="margin-top: 8px;">
           <button id="ks-btn-create" class="btn btn-primary">Create Key</button>
@@ -229,6 +233,12 @@ print("Square of 5 is: " .. tostring(square(5)))</textarea>
             <label class="select-row">
               <span class="select-row-label">Loader title</span>
               <input type="text" id="ks-loader-title" class="select-input" placeholder="Zer Protected Script">
+            </label>
+            <label class="select-row">
+              <span class="select-row-label">Prefill title from script (optional)</span>
+              <select id="ks-loader-script" class="select-input">
+                <option value="">— none —</option>
+              </select>
             </label>
           </div>
           <div class="stage-actions" style="margin-top: 10px;">
