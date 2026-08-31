@@ -206,7 +206,15 @@ print("Square of 5 is: " .. tostring(square(5)))</textarea>
           <h2 class="stage-title">Key System</h2>
         </div>
 
-        <div class="stage-actions">
+        <div class="select-list">
+          <label class="select-row">
+            <span class="select-row-label">Scope new key to script</span>
+            <select id="ks-new-key-script" class="select-input">
+              <option value="">Any script</option>
+            </select>
+          </label>
+        </div>
+        <div class="stage-actions" style="margin-top: 8px;">
           <button id="ks-btn-create" class="btn btn-primary">Create Key</button>
           <button id="ks-btn-refresh" class="btn btn-ghost">Refresh List</button>
           <button id="ks-btn-logout" class="btn btn-ghost">Lock</button>
@@ -216,14 +224,11 @@ print("Square of 5 is: " .. tostring(square(5)))</textarea>
 
         <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);">
           <div class="stage-title" style="margin-bottom: 10px;">Generate Loader</div>
+          <p style="color: var(--muted); font-size: 12.5px; margin-bottom: 10px;">The loader detects the game's Place ID itself and requests access from the server — no script URL needed. Make sure the script is saved in the Scripts tab with the right Place ID attached first.</p>
           <div class="select-list">
             <label class="select-row">
               <span class="select-row-label">Loader title</span>
               <input type="text" id="ks-loader-title" class="select-input" placeholder="Zer Protected Script">
-            </label>
-            <label class="select-row">
-              <span class="select-row-label">Obfuscated script URL (raw link)</span>
-              <input type="text" id="ks-loader-url" class="select-input" placeholder="https://api.rubis.app/v2/scrap/.../raw">
             </label>
           </div>
           <div class="stage-actions" style="margin-top: 10px;">
