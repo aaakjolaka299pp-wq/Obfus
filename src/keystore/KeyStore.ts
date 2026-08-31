@@ -12,7 +12,8 @@ import crypto from "crypto";
 
 export interface KeyRecord {
   key: string;
-  hwid: string | null;
+  hwids: string[];
+  hwidLimit: number | null; // null = unlimited
   note: string;
   createdAt: number;
   expiresAt: number | null; // null = never expires
@@ -26,6 +27,10 @@ export type CheckResult =
   | { valid: true }
   | { valid: false; reason: "NOT_FOUND" | "REVOKED" | "EXPIRED" | "HWID_LOCKED" | "WRONG_SCRIPT" };
 
+export type HwidResult =
+  | { success: true }
+  | { success: false; reason: "NOT_FOUND" | "LIMIT_REACHED" | "NOT_BOUND" };
+
 const STORE_PATH = process.env.KEY_STORE_PATH || "/data/keys.json";
 
 let cache: Record<string, KeyRecord> | null = null;
@@ -38,11 +43,16 @@ function load(): Record<string, KeyRecord> {
   }
   try {
     cache = JSON.parse(readFileSync(STORE_PATH, "utf-8"));
-    // Backfill fields for records saved before scriptId/uses existed.
-    for (const rec of Object.values(cache!)) {
+    for (const rec of Object.values(cache!) as any[]) {
       if (rec.scriptId === undefined) rec.scriptId = null;
       if (rec.uses === undefined) rec.uses = 0;
       if (rec.lastUsedAt === undefined) rec.lastUsedAt = null;
+      // Migrate the old single `hwid` field into the new `hwids` array.
+      if (!Array.isArray(rec.hwids)) {
+        rec.hwids = rec.hwid ? [rec.hwid] : [];
+        delete rec.hwid;
+      }
+      if (rec.hwidLimit === undefined) rec.hwidLimit = 1;
     }
   } catch (err) {
     console.error("[KeyStore] Failed to read store, starting empty:", err);
@@ -62,12 +72,18 @@ function randomKey(): string {
   return crypto.randomBytes(16).toString("hex"); // 32 hex chars
 }
 
-export function createKey(opts: { note?: string; expiresInDays?: number; scriptId?: string | null }): KeyRecord {
+export function createKey(opts: {
+  note?: string;
+  expiresInDays?: number;
+  scriptId?: string | null;
+  hwidLimit?: number | null;
+}): KeyRecord {
   const store = load();
   const key = randomKey();
   const record: KeyRecord = {
     key,
-    hwid: null,
+    hwids: [],
+    hwidLimit: opts.hwidLimit === undefined ? 1 : opts.hwidLimit,
     note: opts.note || "",
     createdAt: Date.now(),
     expiresAt: opts.expiresInDays ? Date.now() + opts.expiresInDays * 86400000 : null,
@@ -111,11 +127,12 @@ export function checkKey(key: string, hwid: string, scriptId?: string): CheckRes
   if (rec.expiresAt && Date.now() > rec.expiresAt) return { valid: false, reason: "EXPIRED" };
   if (rec.scriptId && scriptId && rec.scriptId !== scriptId) return { valid: false, reason: "WRONG_SCRIPT" };
 
-  if (!rec.hwid) {
-    // First use — bind this HWID to the key.
-    rec.hwid = hwid;
-  } else if (rec.hwid !== hwid) {
-    return { valid: false, reason: "HWID_LOCKED" };
+  if (!rec.hwids.includes(hwid)) {
+    const limit = rec.hwidLimit;
+    if (limit !== null && rec.hwids.length >= limit) {
+      return { valid: false, reason: "HWID_LOCKED" };
+    }
+    rec.hwids.push(hwid);
   }
 
   rec.uses += 1;
@@ -125,11 +142,48 @@ export function checkKey(key: string, hwid: string, scriptId?: string): CheckRes
   return { valid: true };
 }
 
+// Clears every bound HWID on a key (start over from zero devices).
 export function resetHwid(key: string): boolean {
   const store = load();
   const rec = store[key];
   if (!rec) return false;
-  rec.hwid = null;
+  rec.hwids = [];
+  save();
+  return true;
+}
+
+// Manually bind one specific HWID (e.g. pre-authorizing a device),
+// respecting the key's HWID limit.
+export function addHwid(key: string, hwid: string): HwidResult {
+  const store = load();
+  const rec = store[key];
+  if (!rec) return { success: false, reason: "NOT_FOUND" };
+  if (rec.hwids.includes(hwid)) return { success: true };
+  if (rec.hwidLimit !== null && rec.hwids.length >= rec.hwidLimit) {
+    return { success: false, reason: "LIMIT_REACHED" };
+  }
+  rec.hwids.push(hwid);
+  save();
+  return { success: true };
+}
+
+// Frees up one specific device slot without clearing the others.
+export function removeHwid(key: string, hwid: string): HwidResult {
+  const store = load();
+  const rec = store[key];
+  if (!rec) return { success: false, reason: "NOT_FOUND" };
+  const before = rec.hwids.length;
+  rec.hwids = rec.hwids.filter((h) => h !== hwid);
+  if (rec.hwids.length === before) return { success: false, reason: "NOT_BOUND" };
+  save();
+  return { success: true };
+}
+
+export function setHwidLimit(key: string, limit: number | null): boolean {
+  const store = load();
+  const rec = store[key];
+  if (!rec) return false;
+  rec.hwidLimit = limit;
   save();
   return true;
 }
