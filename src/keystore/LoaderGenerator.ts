@@ -155,53 +155,139 @@ gui.Name = "ZerKeySystem"
 gui.ResetOnSpawn = false
 gui.Parent = (gethui and gethui()) or game:GetService("CoreGui")
 
+local backdrop = Instance.new("Frame")
+backdrop.Size = UDim2.new(1, 0, 1, 0)
+backdrop.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+backdrop.BackgroundTransparency = 1
+backdrop.BorderSizePixel = 0
+backdrop.ZIndex = 0
+backdrop.Parent = gui
+
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 190)
-frame.Position = UDim2.new(0.5, -150, 0.5, -95)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
+frame.Size = UDim2.new(0, 320, 0, 210)
+frame.Position = UDim2.new(0.5, -160, 0.5, -105)
+frame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 frame.BorderSizePixel = 0
+frame.ClipsDescendants = false
 frame.Parent = gui
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
+corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = frame
 
+local innerStroke = Instance.new("UIStroke")
+innerStroke.Color = Color3.fromRGB(45, 48, 56)
+innerStroke.Thickness = 1
+innerStroke.Transparency = 0.2
+innerStroke.Parent = frame
+
+-- A slim rotating gradient ring around the frame edge — a common accent
+-- in Roblox key-system UIs, built fresh here rather than borrowed.
+local glowRing = Instance.new("Frame")
+glowRing.Size = UDim2.new(1, 6, 1, 6)
+glowRing.Position = UDim2.new(0, -3, 0, -3)
+glowRing.BackgroundTransparency = 1
+glowRing.ZIndex = frame.ZIndex - 1
+glowRing.Parent = frame
+
+local glowCorner = Instance.new("UICorner")
+glowCorner.CornerRadius = UDim.new(0, 14)
+glowCorner.Parent = glowRing
+
+local glowStroke = Instance.new("UIStroke")
+glowStroke.Thickness = 2
+glowStroke.Transparency = 0.35
+glowStroke.Parent = glowRing
+
+local glowGradient = Instance.new("UIGradient")
+glowGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(76, 130, 247)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(52, 211, 153)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(76, 130, 247)),
+})
+glowGradient.Parent = glowStroke
+
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 46)
+header.BackgroundTransparency = 1
+header.Parent = frame
+
 local titleLabel = Instance.new("TextLabel")
-titleLabel.Text = ${JSON.stringify(title)} .. " — Enter Key"
-titleLabel.Size = UDim2.new(1, 0, 0, 30)
+titleLabel.Text = ${JSON.stringify(title)}
+titleLabel.Size = UDim2.new(1, -20, 0, 22)
+titleLabel.Position = UDim2.new(0, 14, 0, 10)
 titleLabel.BackgroundTransparency = 1
-titleLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.TextColor3 = Color3.fromRGB(240, 240, 245)
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextSize = 16
-titleLabel.Parent = frame
+titleLabel.Parent = header
+
+local subtitleLabel = Instance.new("TextLabel")
+subtitleLabel.Text = "Enter your key to continue"
+subtitleLabel.Size = UDim2.new(1, -20, 0, 16)
+subtitleLabel.Position = UDim2.new(0, 14, 0, 30)
+subtitleLabel.BackgroundTransparency = 1
+subtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+subtitleLabel.TextColor3 = Color3.fromRGB(130, 134, 148)
+subtitleLabel.Font = Enum.Font.Gotham
+subtitleLabel.TextSize = 12
+subtitleLabel.Parent = header
+
+local divider = Instance.new("Frame")
+divider.Size = UDim2.new(1, -28, 0, 1)
+divider.Position = UDim2.new(0, 14, 0, 46)
+divider.BackgroundColor3 = Color3.fromRGB(40, 43, 50)
+divider.BorderSizePixel = 0
+divider.Parent = frame
+
+local inputHolder = Instance.new("Frame")
+inputHolder.Size = UDim2.new(1, -28, 0, 38)
+inputHolder.Position = UDim2.new(0, 14, 0, 58)
+inputHolder.BackgroundColor3 = Color3.fromRGB(26, 27, 32)
+inputHolder.BorderSizePixel = 0
+inputHolder.Parent = frame
+
+local inputCorner = Instance.new("UICorner")
+inputCorner.CornerRadius = UDim.new(0, 8)
+inputCorner.Parent = inputHolder
+
+local inputStroke = Instance.new("UIStroke")
+inputStroke.Color = Color3.fromRGB(48, 51, 60)
+inputStroke.Thickness = 1
+inputStroke.Transparency = 0.4
+inputStroke.Parent = inputHolder
 
 local input = Instance.new("TextBox")
 input.PlaceholderText = "Paste your key here"
-input.Size = UDim2.new(1, -20, 0, 36)
-input.Position = UDim2.new(0, 10, 0, 40)
-input.BackgroundColor3 = Color3.fromRGB(30, 30, 36)
+input.Size = UDim2.new(1, -20, 1, 0)
+input.Position = UDim2.new(0, 10, 0, 0)
+input.BackgroundTransparency = 1
 input.TextColor3 = Color3.fromRGB(255, 255, 255)
+input.PlaceholderColor3 = Color3.fromRGB(100, 104, 116)
 input.Font = Enum.Font.Code
 input.TextSize = 14
+input.TextXAlignment = Enum.TextXAlignment.Left
 input.ClearTextOnFocus = false
 input.Text = ""
-input.Parent = frame
+input.Parent = inputHolder
 
 local status = Instance.new("TextLabel")
 status.Text = ""
-status.Size = UDim2.new(1, -20, 0, 32)
-status.Position = UDim2.new(0, 10, 0, 82)
+status.Size = UDim2.new(1, -28, 0, 30)
+status.Position = UDim2.new(0, 14, 0, 100)
 status.BackgroundTransparency = 1
-status.TextColor3 = Color3.fromRGB(255, 90, 90)
+status.TextColor3 = Color3.fromRGB(255, 110, 110)
 status.Font = Enum.Font.Gotham
 status.TextSize = 12
 status.TextWrapped = true
+status.TextXAlignment = Enum.TextXAlignment.Left
 status.Parent = frame
 
 local submit = Instance.new("TextButton")
 submit.Text = "Submit"
-submit.Size = UDim2.new(1, -20, 0, 30)
-submit.Position = UDim2.new(0, 10, 0, 118)
+submit.Size = UDim2.new(1, -28, 0, 34)
+submit.Position = UDim2.new(0, 14, 0, 134)
 submit.BackgroundColor3 = Color3.fromRGB(76, 130, 247)
 submit.TextColor3 = Color3.fromRGB(255, 255, 255)
 submit.Font = Enum.Font.GothamBold
@@ -209,16 +295,53 @@ submit.TextSize = 14
 submit.AutoButtonColor = true
 submit.Parent = frame
 
+local submitCorner = Instance.new("UICorner")
+submitCorner.CornerRadius = UDim.new(0, 8)
+submitCorner.Parent = submit
+
 local getKeyBtn = Instance.new("TextButton")
 getKeyBtn.Text = "Get Key"
-getKeyBtn.Size = UDim2.new(1, -20, 0, 30)
-getKeyBtn.Position = UDim2.new(0, 10, 0, 152)
-getKeyBtn.BackgroundColor3 = Color3.fromRGB(40, 44, 52)
-getKeyBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
+getKeyBtn.Size = UDim2.new(1, -28, 0, 34)
+getKeyBtn.Position = UDim2.new(0, 14, 0, 172)
+getKeyBtn.BackgroundColor3 = Color3.fromRGB(28, 30, 36)
+getKeyBtn.TextColor3 = Color3.fromRGB(220, 222, 230)
 getKeyBtn.Font = Enum.Font.GothamBold
 getKeyBtn.TextSize = 14
 getKeyBtn.AutoButtonColor = true
 getKeyBtn.Parent = frame
+
+local getKeyCorner = Instance.new("UICorner")
+getKeyCorner.CornerRadius = UDim.new(0, 8)
+getKeyCorner.Parent = getKeyBtn
+
+local getKeyStroke = Instance.new("UIStroke")
+getKeyStroke.Color = Color3.fromRGB(50, 53, 62)
+getKeyStroke.Thickness = 1
+getKeyStroke.Transparency = 0.3
+getKeyStroke.Parent = getKeyBtn
+
+-- Entrance animation: fade the backdrop in and pop the card in from a
+-- slightly smaller, lower, transparent state.
+local TweenService = game:GetService("TweenService")
+local finalSize = frame.Size
+local finalPos = frame.Position
+frame.Size = UDim2.new(0, 288, 0, 189)
+frame.Position = finalPos + UDim2.new(0, 16, 0, 16)
+frame.BackgroundTransparency = 1
+innerStroke.Transparency = 1
+TweenService:Create(backdrop, TweenInfo.new(0.25), { BackgroundTransparency = 0.55 }):Play()
+TweenService:Create(frame, TweenInfo.new(0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+    Size = finalSize, Position = finalPos, BackgroundTransparency = 0,
+}):Play()
+TweenService:Create(innerStroke, TweenInfo.new(0.4), { Transparency = 0.2 }):Play()
+
+-- Slowly rotate the accent ring's gradient for a subtle "alive" feel.
+task.spawn(function()
+    while glowRing.Parent do
+        glowGradient.Rotation = (glowGradient.Rotation + 1) % 360
+        task.wait(0.03)
+    end
+end)
 
 submit.MouseButton1Click:Connect(function()
     local key = input.Text:gsub("%s", "")
