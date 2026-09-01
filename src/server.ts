@@ -460,9 +460,10 @@ app.post("/api/getkey/start", async (req: express.Request, res: express.Response
       return res.status(502).json({ error: "Failed to create a Get Key link right now." }) as any;
     }
 
+    const msg = Array.isArray(llData.message) ? llData.message[0] : llData.message;
     const lootUrl: string | undefined =
-      llData.message?.loot_url ||
-      (llData.message?.short ? `https://loot-link.com/s?${llData.message.short}` : undefined);
+      msg?.loot_url ||
+      (msg?.short ? `https://loot-link.com/s?${msg.short}` : undefined);
 
     if (!lootUrl) {
       console.error("[API-ERROR] LootLabs response missing loot_url/short. Full response:", llText);
