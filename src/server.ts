@@ -17,6 +17,7 @@ import { generateRegVM } from "./vm/reg-vm-gen.js";
 import { generateAntiTamperPrelude } from "./obfuscator/AntiTamper.js";
 import * as KeyStore from "./keystore/KeyStore.js";
 import * as ScriptStore from "./keystore/ScriptStore.js";
+import * as GetKeyStore from "./keystore/GetKeyStore.js";
 import { generateLoader } from "./keystore/LoaderGenerator.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -28,6 +29,11 @@ const PORT = process.env.PORT || 3000;
 const PASTEBIN_API_KEY = process.env.PASTEBIN_API_KEY;
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
+
+const LOOTLABS_API_TOKEN = process.env.LOOTLABS_API_TOKEN;
+const LOOTLABS_TIER_ID = process.env.LOOTLABS_TIER_ID ? parseInt(process.env.LOOTLABS_TIER_ID, 10) : 1;
+const LOOTLABS_TASKS = process.env.LOOTLABS_TASKS ? parseInt(process.env.LOOTLABS_TASKS, 10) : 2;
+const LOOTLABS_THEME = process.env.LOOTLABS_THEME ? parseInt(process.env.LOOTLABS_THEME, 10) : 1;
 
 // --- Basic in-memory rate limiter for the public /api/access endpoint ---
 // Not a substitute for a real rate-limiting service, but enough to blunt
@@ -402,6 +408,142 @@ app.post("/api/access", (req: express.Request, res: express.Response) => {
   res.json({ valid: true, source: full.source });
 });
 
+// --- LootLabs "Get Key" flow ---
+// 1. Loader calls /api/getkey/start with its Place ID.
+// 2. We create a pending session and ask LootLabs for a content-locker
+//    link, tagging it with our session token via &puid so we can match
+//    the postback back to this exact session.
+// 3. User completes the LootLabs tasks; LootLabs GETs /api/getkey/postback
+//    with that token as click_id, and we issue a real license key.
+// 4. The loader (or the results page) polls /api/getkey/status/:token
+//    until a key shows up.
+
+app.post("/api/getkey/start", async (req: express.Request, res: express.Response) => {
+  if (!LOOTLABS_API_TOKEN) {
+    return res.status(500).json({ error: "Get Key isn't configured on the server (missing LOOTLABS_API_TOKEN)." }) as any;
+  }
+  const { placeId } = req.body || {};
+  if (typeof placeId !== "string" || placeId.trim() === "") {
+    return res.status(400).json({ error: "Missing 'placeId'" }) as any;
+  }
+
+  const script = ScriptStore.findScriptByPlaceId(placeId.trim());
+  if (!script) {
+    return res.status(404).json({ error: "This game isn't supported yet." }) as any;
+  }
+
+  const session = GetKeyStore.createSession(script.id);
+  const resultUrl = `${req.protocol}://${req.get("host")}/getkey-result?token=${session.token}`;
+
+  try {
+    const llRes = await fetch("https://creators.lootlabs.gg/api/public/content_locker", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${LOOTLABS_API_TOKEN}`,
+      },
+      body: JSON.stringify({
+        title: `Unlock: ${script.title}`,
+        url: resultUrl,
+        tier_id: LOOTLABS_TIER_ID,
+        number_of_tasks: LOOTLABS_TASKS,
+        theme: LOOTLABS_THEME,
+      }),
+    });
+
+    const llText = await llRes.text();
+    let llData: any = null;
+    try { llData = JSON.parse(llText); } catch { /* not JSON */ }
+
+    if (!llRes.ok || !llData || llData.type !== "created") {
+      console.error("[API-ERROR] LootLabs content_locker failed:", llRes.status, llText);
+      return res.status(502).json({ error: "Failed to create a Get Key link right now." }) as any;
+    }
+
+    const lootUrl: string = llData.message.loot_url;
+    const separator = lootUrl.includes("?") ? "&" : "?";
+    const finalUrl = `${lootUrl}${separator}puid=${session.token}`;
+
+    res.json({ token: session.token, url: finalUrl });
+  } catch (err: any) {
+    console.error("[API-ERROR] /api/getkey/start failed:", err.message);
+    res.status(502).json({ error: "Couldn't reach LootLabs right now." });
+  }
+});
+
+app.get("/api/getkey/postback", (req: express.Request, res: express.Response) => {
+  const clickId = req.query.click_id;
+  if (typeof clickId !== "string") {
+    return res.status(400).send("Missing click_id") as any;
+  }
+
+  const session = GetKeyStore.getSession(clickId);
+  if (!session) {
+    return res.status(404).send("Unknown session") as any;
+  }
+
+  if (session.status === "pending") {
+    const record = KeyStore.createKey({ note: "Issued via LootLabs Get Key", scriptId: session.scriptId });
+    GetKeyStore.completeSession(clickId, record.key, req.ip || null);
+    console.log(`[API] /api/getkey/postback - issued key for session ${clickId}`);
+  }
+
+  res.status(200).send("OK");
+});
+
+app.get("/api/getkey/status/:token", (req: express.Request, res: express.Response) => {
+  const session = GetKeyStore.getSession(String(req.params.token));
+  if (!session) return res.status(404).json({ status: "not_found" }) as any;
+  res.json({ status: session.status, key: session.issuedKey });
+});
+
+// Simple landing page LootLabs sends the user back to once they finish
+// the tasks. It just polls the status endpoint and shows the key.
+app.get("/getkey-result", (req: express.Request, res: express.Response) => {
+  const token = typeof req.query.token === "string" ? req.query.token : "";
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(`<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your key</title>
+<style>
+  body { background:#0F1115; color:#E8EAF0; font-family: ui-monospace, monospace; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; padding:20px; }
+  .box { max-width: 420px; text-align:center; }
+  h1 { font-size: 18px; }
+  #key { background:#171A20; border:1px solid #262B33; border-radius:8px; padding:14px; margin-top:16px; word-break:break-all; font-size:15px; }
+  button { margin-top:14px; background:#4C82F7; color:#0B1220; border:none; border-radius:7px; padding:10px 18px; font-weight:600; cursor:pointer; }
+  p { color:#7C8494; font-size:13px; }
+</style></head>
+<body>
+  <div class="box">
+    <h1 id="status">Waiting for task completion...</h1>
+    <div id="key" style="display:none;"></div>
+    <button id="copyBtn" style="display:none;">Copy key</button>
+    <p>You can close this page and go back to Roblox once your key appears — the loader will pick it up automatically.</p>
+  </div>
+  <script>
+    const token = ${JSON.stringify(token)};
+    async function poll() {
+      try {
+        const res = await fetch('/api/getkey/status/' + encodeURIComponent(token));
+        const data = await res.json();
+        if (data.status === 'completed' && data.key) {
+          document.getElementById('status').innerText = 'Your key is ready!';
+          const keyEl = document.getElementById('key');
+          keyEl.innerText = data.key;
+          keyEl.style.display = 'block';
+          const btn = document.getElementById('copyBtn');
+          btn.style.display = 'inline-block';
+          btn.onclick = () => navigator.clipboard.writeText(data.key);
+          return;
+        }
+      } catch (e) {}
+      setTimeout(poll, 3000);
+    }
+    poll();
+  </script>
+</body></html>`);
+});
+
 app.post("/api/admin/scripts", (req: express.Request, res: express.Response) => {
   if (!requireAdmin(req, res)) return;
   const { title, source } = req.body || {};
@@ -487,10 +629,13 @@ app.get("/api/admin/places/:placeId", (req: express.Request, res: express.Respon
 
 app.post("/api/loader/generate", (req: express.Request, res: express.Response) => {
   const { title, keyFileName } = req.body || {};
-  const accessUrl = `${req.protocol}://${req.get("host")}/api/access`;
+  const base = `${req.protocol}://${req.get("host")}`;
+  const accessUrl = `${base}/api/access`;
   const loader = generateLoader({
     title: typeof title === "string" && title.trim() ? title : "Zer Protected Script",
     accessUrl,
+    getKeyStartUrl: `${base}/api/getkey/start`,
+    getKeyStatusBaseUrl: `${base}/api/getkey/status/`,
     keyFileName: typeof keyFileName === "string" && keyFileName.trim() ? keyFileName : "zer_key.txt",
   });
   res.json({ loader, accessUrl });
