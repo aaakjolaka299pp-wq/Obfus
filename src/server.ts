@@ -482,13 +482,19 @@ app.post("/api/getkey/start", async (req: express.Request, res: express.Response
 
 app.get("/api/getkey/postback", (req: express.Request, res: express.Response) => {
   const clickId = req.query.click_id;
-  if (typeof clickId !== "string") {
-    return res.status(400).send("Missing click_id") as any;
+  // LootLabs pings this URL (without click_id) to validate it before
+  // letting the postback config be saved — answer 200 so that check
+  // passes, but don't try to process anything without a real session id.
+  if (typeof clickId !== "string" || clickId.trim() === "") {
+    return res.status(200).send("OK") as any;
   }
 
   const session = GetKeyStore.getSession(clickId);
   if (!session) {
-    return res.status(404).send("Unknown session") as any;
+    // Still 200: an unknown id shouldn't make LootLabs think the
+    // endpoint itself is broken.
+    console.error(`[API-ERROR] /api/getkey/postback - unknown session ${clickId}`);
+    return res.status(200).send("OK") as any;
   }
 
   if (session.status === "pending") {
