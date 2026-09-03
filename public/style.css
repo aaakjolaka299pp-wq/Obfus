@@ -1,17 +1,58 @@
 :root {
-  --ink: #0F1115;
-  --panel: #171A20;
-  --panel-raised: #1D2129;
-  --line: #262B33;
-  --text: #E8EAF0;
-  --muted: #7C8494;
-  --signal: #4C82F7;
-  --signal-dim: #2E3B5C;
-  --ok: #34D399;
-  --warn: #F0625F;
+  /* --- Zero Lua Design System: semantic tokens (source of truth) --- */
 
+  /* Brand / primary */
+  --color-primary: #00BB7F;
+  --color-primary-light: #10B981;
+  --color-danger: #FF2357;
+  --color-warning: #F99C00;
+  --color-cyan: #00F0FF;
+  --color-success: #00C758;
+
+  --color-danger-alt: #FB2C36;
+  --color-warning-alt: #EDB200;
+
+  /* Neutrals */
+  --color-black: #000000;
+  --color-white: #FFFFFF;
+
+  --color-bg: #06070A;
+  --color-bg-light: #F3F4F6;
+  --color-bg-secondary: #0B0C10;
+  --color-bg-tertiary: #0D0F15;
+
+  --color-surface: #161A24;
+  --color-surface-secondary: #12141C;
+
+  --color-text-muted: #9CA3AF;
+  --color-text-secondary: #6B7280;
+
+  /* Fonts */
+  --font-primary: 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --font-body: 'Inter', system-ui, sans-serif;
+
+  /* Radius — sharp, compact, technical. Never introduce larger values. */
+  --radius-none: 0;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-rem: 0.25rem;
+
+  /* --- Legacy aliases ---
+     Kept so every existing selector below can stay unchanged while pointing
+     at the new semantic tokens above. New rules should prefer the tokens
+     above directly; these exist only for backward-compatible naming. */
+  --ink: var(--color-bg);
+  --panel: var(--color-bg-secondary);
+  --panel-raised: var(--color-surface-secondary);
+  --line: var(--color-surface);
+  --text: var(--color-white);
+  --muted: var(--color-text-muted);
+  --signal: var(--color-primary);
+  --signal-dim: #0A4535;
+  --ok: var(--color-success);
+  --warn: var(--color-danger);
+
+  --font-body: var(--font-primary);
 }
 
 * {
@@ -21,11 +62,35 @@
 }
 
 body {
-  background: var(--ink);
+  background: var(--color-bg);
   color: var(--text);
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-primary) 30%, transparent);
+  color: var(--color-white);
+}
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
 }
 
 .page {
@@ -58,7 +123,7 @@ body {
 
 .signal-rail {
   height: 3px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: var(--signal-dim);
   overflow: hidden;
   position: relative;
@@ -69,7 +134,7 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: var(--signal);
+  background: var(--color-primary);
   transform: translateX(-100%);
   transition: background-color 0.3s ease;
 }
@@ -79,13 +144,13 @@ body {
 }
 
 .signal-rail.is-success::after {
-  background: var(--ok);
+  background: var(--color-success);
   transform: translateX(0);
   transition: transform 0.35s ease, background-color 0.2s ease;
 }
 
 .signal-rail.is-error::after {
-  background: var(--warn);
+  background: var(--color-danger);
   transform: translateX(0);
   transition: transform 0.35s ease, background-color 0.2s ease;
 }
@@ -112,8 +177,8 @@ body {
 }
 
 .tab-btn {
-  font-family: var(--font-mono);
-  font-size: 12.5px;
+  font-family: var(--font-primary);
+  font-size: 13px;
   font-weight: 500;
   color: var(--muted);
   background: none;
@@ -123,6 +188,7 @@ body {
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .tab-btn:hover {
@@ -130,8 +196,8 @@ body {
 }
 
 .tab-btn.is-active {
-  color: var(--signal);
-  border-bottom-color: var(--signal);
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 .tab-panel {
@@ -151,9 +217,9 @@ body {
 }
 
 .stage {
-  background: var(--panel);
+  background: var(--color-bg-secondary);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 16px;
 }
 
@@ -168,12 +234,12 @@ body {
 .stage-eyebrow {
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--signal);
+  color: var(--color-primary);
   letter-spacing: 0.05em;
 }
 
 .stage-title {
-  font-family: var(--font-mono);
+  font-family: var(--font-primary);
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
@@ -196,9 +262,9 @@ body {
   flex-shrink: 0;
 }
 
-.status-dot.status-green { background: var(--ok); }
-.status-dot.status-amber { background: #E8B84C; }
-.status-dot.status-red { background: var(--warn); }
+.status-dot.status-green { background: var(--color-success); }
+.status-dot.status-amber { background: var(--color-warning); }
+.status-dot.status-red { background: var(--color-danger); }
 
 /* Code areas */
 
@@ -206,19 +272,21 @@ body {
   width: 100%;
   min-height: 200px;
   resize: vertical;
-  background: var(--ink);
+  background: var(--color-bg);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--text);
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.6;
   padding: 12px;
   tab-size: 4;
+  overflow-x: auto;
+  white-space: pre;
 }
 
 .code-area:focus-visible {
-  outline: 2px solid var(--signal);
+  outline: 2px solid var(--color-primary);
   outline-offset: 1px;
 }
 
@@ -240,24 +308,28 @@ body {
 }
 
 .btn {
-  font-family: var(--font-mono);
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 500;
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--line);
   padding: 10px 16px;
   cursor: pointer;
-  background: var(--panel-raised);
+  background: var(--color-surface-secondary);
   color: var(--text);
-  transition: border-color 0.15s ease, opacity 0.15s ease;
+  transition: border-color 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
 }
 
 .btn:hover:not(:disabled) {
-  border-color: var(--signal);
+  border-color: var(--color-primary);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .btn:focus-visible {
-  outline: 2px solid var(--signal);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -267,15 +339,49 @@ body {
 }
 
 .btn-primary {
-  background: var(--signal);
-  border-color: var(--signal);
-  color: #0B1220;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-bg);
   font-weight: 600;
 }
 
 .btn-primary:hover:not(:disabled) {
-  border-color: var(--signal);
-  opacity: 0.92;
+  border-color: var(--color-primary-light);
+  background: var(--color-primary-light);
+}
+
+/* Secondary button — dark surface, subtle border, muted text (brief §9) */
+.btn-ghost {
+  background: var(--color-bg-tertiary);
+  border-color: var(--line);
+  color: var(--color-text-muted);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--text);
+}
+
+.btn-danger {
+  background: transparent;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--color-danger);
+  color: var(--color-white);
+}
+
+.btn-warning {
+  background: transparent;
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: var(--color-warning);
+  color: var(--color-bg);
 }
 
 .btn-run {
@@ -293,8 +399,8 @@ body {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 2px solid rgba(11, 18, 32, 0.3);
-  border-top-color: #0B1220;
+  border: 2px solid color-mix(in oklab, var(--color-bg) 70%, transparent);
+  border-top-color: var(--color-bg);
   animation: spin 0.7s linear infinite;
 }
 
@@ -332,7 +438,7 @@ body {
   margin-top: 3px;
   width: 15px;
   height: 15px;
-  accent-color: var(--signal);
+  accent-color: var(--color-primary);
   flex-shrink: 0;
 }
 
@@ -369,22 +475,22 @@ body {
 .select-row-label {
   font-size: 12px;
   color: var(--muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-primary);
 }
 
 .select-input {
   width: 100%;
-  background: var(--ink);
+  background: var(--color-bg);
   color: var(--text);
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   padding: 9px 10px;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 13.5px;
 }
 
 .select-input:focus-visible {
-  outline: 2px solid var(--signal);
+  outline: 2px solid var(--color-primary);
   outline-offset: 1px;
 }
 
@@ -399,9 +505,9 @@ body {
 
 .overview-card {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 12px;
-  background: var(--ink);
+  background: var(--color-bg);
 }
 
 .overview-card-value {
@@ -419,7 +525,7 @@ body {
 
 .overview-chart {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 12px;
 }
 
@@ -431,7 +537,7 @@ body {
 
 .multiselect {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 4px 10px;
   max-height: 220px;
   overflow-y: auto;
@@ -446,7 +552,7 @@ body {
 }
 
 .about-title {
-  font-family: var(--font-mono);
+  font-family: var(--font-primary);
   font-size: 15px;
   font-weight: 600;
   margin-bottom: 16px;
@@ -489,23 +595,23 @@ body {
   pointer-events: auto;
   max-width: 480px;
   width: 100%;
-  background: var(--panel-raised);
+  background: var(--color-surface-secondary);
   border: 1px solid var(--line);
   border-left: 3px solid var(--muted);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 11px 14px;
   font-size: 13px;
   color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   animation: toast-in 0.2s ease;
 }
 
-.toast.toast-success { border-left-color: var(--ok); }
-.toast.toast-error { border-left-color: var(--warn); }
-.toast.toast-info { border-left-color: var(--signal); }
+.toast.toast-success { border-left-color: var(--color-success); }
+.toast.toast-error { border-left-color: var(--color-danger); }
+.toast.toast-info { border-left-color: var(--color-cyan); }
 
 .toast-dismiss {
   margin-left: auto;
@@ -544,5 +650,20 @@ body {
 
   .wordmark {
     font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stage {
+    padding: 12px;
+  }
+
+  .btn {
+    padding: 9px 13px;
+    font-size: 12.5px;
+  }
+
+  .toast-region {
+    padding: 0 10px;
   }
 }

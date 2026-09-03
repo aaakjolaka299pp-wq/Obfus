@@ -897,11 +897,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const plotH = height - padding.top - padding.bottom;
 
     const series = [
-      { key: "clicks", color: "#7aa2ff", label: "Clicks" },
-      { key: "checkpoints", color: "#f2c14e", label: "Checkpoints" },
-      { key: "keysGenerated", color: "#4ade80", label: "Keys Generated" },
-      { key: "keysUsed", color: "#22d3ee", label: "Keys Used" },
-      { key: "scriptExecutions", color: "#f87171", label: "Script Executions" },
+      { key: "clicks", color: "#00F0FF", label: "Clicks" },
+      { key: "checkpoints", color: "#F99C00", label: "Checkpoints" },
+      { key: "keysGenerated", color: "#00BB7F", label: "Keys Generated" },
+      { key: "keysUsed", color: "#10B981", label: "Keys Used" },
+      { key: "scriptExecutions", color: "#FF2357", label: "Script Executions" },
     ];
 
     const maxVal = Math.max(1, ...daily.flatMap(d => series.map(s => d[s.key] || 0)));
