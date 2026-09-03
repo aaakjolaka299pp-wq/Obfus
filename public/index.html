@@ -1,413 +1,356 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zer Lua — Luau Obfuscator</title>
-  <meta name="description" content="Protect Luau scripts before you ship them. Rename variables, encrypt strings, and compile to a virtual machine.">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="style.css?v=2.2.0">
-  <script src="app.js?v=2.2.0" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Zer Lua — Lua &amp; Luau Code Protection</title>
+<meta name="description" content="Client-side code protection for Lua and Luau with virtualization, anti-tamper defenses, and layered obfuscation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="page">
+<header class="header" id="header">
+  <div class="header-inner">
+    <a href="#top" class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+      </span>
+      <span class="brand-name">Zer<span class="brand-accent">Lua</span></span>
+      <span class="brand-badge">v7.0</span>
+    </a>
 
-    <header class="site-header">
-      <span class="wordmark">ZER_LUA</span>
-      <p class="tagline">Protect Luau scripts before you ship them.</p>
-    </header>
-
-    <div class="signal-rail" id="signal-rail" aria-hidden="true"></div>
-
-    <nav class="tab-bar" role="tablist" aria-label="Sections">
-      <button class="tab-btn" data-tab="overview" role="tab" aria-selected="false">Overview</button>
-      <button class="tab-btn is-active" data-tab="obfuscator" role="tab" aria-selected="true">Obfuscator</button>
-      <button class="tab-btn" data-tab="keysystem" role="tab" aria-selected="false">Key</button>
-      <button class="tab-btn" data-tab="scripts" role="tab" aria-selected="false">Lua Script</button>
-      <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false">Settings</button>
-      <button class="tab-btn" data-tab="docs" role="tab" aria-selected="false">Documentation</button>
+    <nav class="nav-desktop" aria-label="Primary">
+      <a href="#security">Security</a>
+      <a href="#compare">Compare</a>
+      <a href="#faq">FAQ</a>
     </nav>
 
-    <!-- ===================== TAB: OVERVIEW (protected) ===================== -->
-    <section class="tab-panel" id="tab-overview" role="tabpanel">
-
-      <div class="stage" id="overview-gate">
-        <div class="stage-head">
-          <h2 class="stage-title">Access Key required</h2>
-        </div>
-        <p style="color: var(--muted); font-size: 13.5px;">Unlock the Key tab first — Overview uses the same access key.</p>
-      </div>
-
-      <div class="stage" id="overview-content" style="display:none;">
-        <div class="stage-head">
-          <h2 class="stage-title">Overview</h2>
-          <div class="select-list" style="margin:0;">
-            <select id="overview-period" class="select-input" style="width:auto;">
-              <option value="7">Last 7 days</option>
-              <option value="14">Last 14 days</option>
-              <option value="30" selected>Last 30 days</option>
-            </select>
-          </div>
-        </div>
-
-        <div id="overview-cards" class="overview-cards"></div>
-
-        <div style="margin-top:22px; padding-top:16px; border-top:1px solid var(--line);">
-          <div class="stage-title" style="margin-bottom:4px;">Combined activity</div>
-          <p style="color:var(--muted); font-size:12.5px; margin-bottom:10px;">Clicks, checkpoints, key generation, key usage, and script executions over the selected period.</p>
-          <div id="overview-chart" class="overview-chart"></div>
-        </div>
-
-        <div style="margin-top:22px; padding-top:16px; border-top:1px solid var(--line);">
-          <div class="stage-title" style="margin-bottom:4px;">Checkpoint bounce rate</div>
-          <p style="color:var(--muted); font-size:12.5px; margin-bottom:10px;">Share of users who completed at least one checkpoint but never finished the full task list (no key was issued for that session).</p>
-          <div id="overview-bounce" class="overview-bounce"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== TAB: OBFUSCATOR (public) ===================== -->
-    <section class="tab-panel is-active" id="tab-obfuscator" role="tabpanel">
-      <main class="pipeline">
-
-        <section class="stage" aria-labelledby="stage-source-title">
-          <div class="stage-head">
-            <span class="stage-eyebrow">01</span>
-            <h2 id="stage-source-title" class="stage-title">Source</h2>
-            <div class="stage-status" id="validation-status">
-              <span class="status-dot" id="indicator"></span>
-              <span id="status-title">Ready</span>
-            </div>
-          </div>
-
-          <textarea id="input-editor" class="code-area" spellcheck="false" placeholder="-- Paste your Luau source here...&#10;&#10;local x = 42&#10;print('Hello World')">-- Zer Lua Obfuscator
--- Press "Obfuscate script" to protect this example.
-
-local message = "Hello, world!"
-print(message)
-
-local function square(n)
-    return n * n
-end
-
-print("Square of 5 is: " .. tostring(square(5)))</textarea>
-
-          <div class="stage-actions">
-            <input type="file" id="file-input" accept=".lua,.luau,.txt" hidden>
-            <button id="btn-upload" class="btn btn-ghost">Upload file</button>
-          </div>
-        </section>
-
-        <section class="stage" aria-labelledby="stage-protect-title">
-          <div class="stage-head">
-            <span class="stage-eyebrow">02</span>
-            <h2 id="stage-protect-title" class="stage-title">Protection</h2>
-          </div>
-
-          <div class="toggle-list">
-            <label class="toggle-row">
-              <input type="checkbox" id="opt-rename" checked>
-              <span class="toggle-copy">
-                <span class="toggle-title">Rename variables</span>
-                <span class="toggle-desc">Scrambles local names into short identifiers.</span>
-              </span>
-            </label>
-
-            <label class="toggle-row">
-              <input type="checkbox" id="opt-preserve" checked>
-              <span class="toggle-copy">
-                <span class="toggle-title">Protect Roblox globals</span>
-                <span class="toggle-desc">Keeps game APIs and engine indices untouched.</span>
-              </span>
-            </label>
-
-            <label class="toggle-row">
-              <input type="checkbox" id="opt-encode" checked>
-              <span class="toggle-copy">
-                <span class="toggle-title">Encrypt strings</span>
-                <span class="toggle-desc">Converts plain text strings into byte arrays.</span>
-              </span>
-            </label>
-
-            <label class="toggle-row">
-              <input type="checkbox" id="opt-scramble" checked>
-              <span class="toggle-copy">
-                <span class="toggle-title">Scramble control flow</span>
-                <span class="toggle-desc">Injects opaque conditions and junk branches.</span>
-              </span>
-            </label>
-
-            <label class="toggle-row">
-              <input type="checkbox" id="opt-oneline">
-              <span class="toggle-copy">
-                <span class="toggle-title">Minify code</span>
-                <span class="toggle-desc">Strips comments, whitespace, and newlines.</span>
-              </span>
-            </label>
-
-            <label class="toggle-row">
-              <input type="checkbox" id="opt-antitamper">
-              <span class="toggle-copy">
-                <span class="toggle-title">Anti-tamper protection</span>
-                <span class="toggle-desc">Detects hooked functions and debugger timing, halts on tampering. May false-positive on some executors.</span>
-              </span>
-            </label>
-          </div>
-
-          <div class="select-list">
-            <label class="select-row">
-              <span class="select-row-label">VM architecture</span>
-              <select id="opt-vm-type" class="select-input">
-                <option value="none">None — standard obfuscation</option>
-                <option value="register" selected>Register-based VM</option>
-                <option value="stack">Stack-based VM</option>
-              </select>
-            </label>
-
-            <label class="select-row">
-              <span class="select-row-label">Hardening grade</span>
-              <select id="opt-vm-level" class="select-input">
-                <option value="max" selected>Max — LZSS, anti-dump, S-box cipher</option>
-                <option value="normal">Normal — XOR table, instruction shuffling</option>
-                <option value="debug">Debug — readable VM for stack tracing</option>
-              </select>
-            </label>
-          </div>
-
-          <button id="btn-obfuscate" class="btn btn-primary btn-run">
-            <span class="btn-text">Obfuscate script</span>
-            <span class="btn-loader hidden" aria-hidden="true"></span>
-          </button>
-        </section>
-
-        <section class="stage" aria-labelledby="stage-output-title">
-          <div class="stage-head">
-            <span class="stage-eyebrow">03</span>
-            <h2 id="stage-output-title" class="stage-title">Output</h2>
-          </div>
-
-          <textarea id="output-editor" class="code-area" readonly placeholder="-- Your protected script will appear here..."></textarea>
-
-          <div class="select-list" style="margin-top: 12px;">
-            <label class="select-row">
-              <span class="select-row-label">Share via</span>
-              <select id="opt-provider" class="select-input">
-                <option value="rubis" selected>Rubiš</option>
-                <option value="pastebin">Pastebin</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="stage-actions stage-actions-triple">
-            <button id="btn-copy" class="btn btn-ghost" disabled>
-              <span id="copy-text">Copy</span>
-            </button>
-            <button id="btn-download" class="btn btn-ghost" disabled>Download</button>
-            <button id="btn-share" class="btn btn-primary" disabled>
-              <span id="share-text">Share link</span>
-            </button>
-          </div>
-          <div class="stage-actions" style="margin-top: 8px;">
-            <button id="btn-save-script" class="btn btn-ghost" disabled>Save to Scripts</button>
-          </div>
-        </section>
-
-      </main>
-    </section>
-
-    <!-- ===================== TAB: KEY SYSTEM (protected) ===================== -->
-    <section class="tab-panel" id="tab-keysystem" role="tabpanel">
-
-      <div class="stage" id="ks-gate">
-        <div class="stage-head">
-          <h2 class="stage-title">Access Key required</h2>
-        </div>
-        <p style="color: var(--muted); font-size: 13.5px; margin-bottom: 12px;">This section is protected. Enter your access key to continue.</p>
-        <div class="select-list">
-          <label class="select-row">
-            <span class="select-row-label">Access key</span>
-            <input type="password" id="ks-gate-input" class="select-input" placeholder="Your ADMIN_KEY from Railway">
-          </label>
-        </div>
-        <div class="stage-actions" style="margin-top: 10px;">
-          <button id="ks-gate-submit" class="btn btn-primary">Unlock</button>
-        </div>
-        <div id="ks-gate-error" style="color: var(--warn); font-size: 12.5px; margin-top: 8px;"></div>
-      </div>
-
-      <div class="stage" id="ks-content" style="display:none;">
-        <div class="stage-head">
-          <h2 class="stage-title">Key</h2>
-        </div>
-
-        <div class="select-list">
-          <label class="select-row">
-            <span class="select-row-label">Key type</span>
-            <select id="ks-new-key-type" class="select-input">
-              <option value="premium" selected>Premium</option>
-              <option value="free">Free</option>
-            </select>
-          </label>
-          <label class="select-row">
-            <span class="select-row-label">Duration</span>
-            <select id="ks-new-key-duration" class="select-input">
-              <option value="1hour">1 Hour</option>
-              <option value="1day">1 Day</option>
-              <option value="1month">1 Month</option>
-              <option value="1year">1 Year</option>
-              <option value="unlimited" selected>Unlimited / Never expires</option>
-            </select>
-          </label>
-          <label class="select-row">
-            <span class="select-row-label">Scope new key to loader (optional)</span>
-            <select id="ks-new-key-loader" class="select-input">
-              <option value="">Any / not loader-scoped</option>
-            </select>
-          </label>
-          <label class="select-row">
-            <span class="select-row-label">HWID limit (empty = unlimited)</span>
-            <input type="number" id="ks-new-key-hwidlimit" class="select-input" placeholder="1" min="0">
-          </label>
-        </div>
-        <div class="stage-actions" style="margin-top: 8px;">
-          <button id="ks-btn-create" class="btn btn-primary">Create Key</button>
-          <button id="ks-btn-logout" class="btn btn-ghost">Lock</button>
-        </div>
-
-        <p id="ks-live-indicator" style="color: var(--muted); font-size: 11.5px; margin-top: 10px;">● Updates automatically</p>
-
-        <div id="ks-list" style="margin-top: 8px; font-family: var(--font-mono); font-size: 12.5px;"></div>
-      </div>
-    </section>
-
-    <!-- ===================== TAB: LUA SCRIPT (protected) ===================== -->
-    <section class="tab-panel" id="tab-scripts" role="tabpanel">
-
-      <div class="stage" id="scripts-gate">
-        <div class="stage-head">
-          <h2 class="stage-title">Access Key required</h2>
-        </div>
-        <p style="color: var(--muted); font-size: 13.5px;">Unlock the Key tab first — Lua Script uses the same access key.</p>
-      </div>
-
-      <div class="stage" id="scripts-content" style="display:none;">
-        <div class="stage-head">
-          <h2 class="stage-title">Lua Script</h2>
-        </div>
-        <p style="color: var(--muted); font-size: 13px; margin-bottom: 12px;">Obfuscated scripts stored privately on the server. Nothing here is reachable by a public URL — access is only ever granted through a generated loader after a valid key check.</p>
-
-        <p id="scripts-live-indicator" style="color: var(--muted); font-size: 11.5px;">● Updates automatically</p>
-
-        <div id="scripts-list" style="margin-top: 8px; font-family: var(--font-mono); font-size: 12.5px;"></div>
-
-        <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);">
-          <div class="stage-title" style="margin-bottom: 10px;">New Script</div>
-          <div class="select-list">
-            <label class="select-row">
-              <span class="select-row-label">Title</span>
-              <input type="text" id="scripts-new-title" class="select-input" placeholder="My protected script">
-            </label>
-          </div>
-          <textarea id="scripts-new-source" class="code-area" style="margin-top: 10px; min-height: 120px;" placeholder="-- Paste obfuscated Lua here, or use 'Save to Scripts' from the Obfuscator tab"></textarea>
-          <div class="stage-actions" style="margin-top: 10px;">
-            <button id="scripts-btn-save" class="btn btn-primary">Save Script</button>
-          </div>
-        </div>
-
-        <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);">
-          <div class="stage-title" style="margin-bottom: 10px;">Generate Loader</div>
-          <p style="color: var(--muted); font-size: 12.5px; margin-bottom: 10px;">A loader can bundle one or more saved scripts below — every selected script gets checked and delivered together. Free loaders show a "Get Key" button (LootLabs); Premium loaders only accept a key you generate yourself in the Key tab.</p>
-
-          <div class="select-list">
-            <label class="select-row">
-              <span class="select-row-label">Loader title</span>
-              <input type="text" id="ks-loader-title" class="select-input" placeholder="Zer Protected Script">
-            </label>
-            <label class="select-row">
-              <span class="select-row-label">Loader type</span>
-              <select id="ks-loader-type" class="select-input">
-                <option value="free">Free (LootLabs Get Key)</option>
-                <option value="premium" selected>Premium (key only, no Get Key button)</option>
-              </select>
-            </label>
-          </div>
-
-          <div style="margin-top:10px;">
-            <span class="select-row-label" style="display:block; margin-bottom:6px;">Scripts to include (select one or more)</span>
-            <div id="ks-loader-script-multiselect" class="multiselect"></div>
-          </div>
-
-          <div class="stage-actions" style="margin-top: 10px;">
-            <button id="ks-btn-loader" class="btn btn-primary">Generate Loader</button>
-          </div>
-          <textarea id="ks-loader-output" class="code-area" readonly style="margin-top: 12px; min-height: 120px;" placeholder="-- Generated loader will appear here..."></textarea>
-          <div class="stage-actions" style="margin-top: 10px;">
-            <button id="ks-btn-loader-copy" class="btn btn-ghost" disabled>Copy</button>
-            <button id="ks-btn-loader-download" class="btn btn-ghost" disabled>Download</button>
-          </div>
-        </div>
-
-        <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);">
-          <div class="stage-title" style="margin-bottom: 10px;">Saved Loaders</div>
-          <div id="ks-loader-list" style="font-family: var(--font-mono); font-size: 12.5px;"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== TAB: SETTINGS ===================== -->
-    <section class="tab-panel" id="tab-settings" role="tabpanel">
-      <div class="stage">
-        <div class="stage-head">
-          <h2 class="stage-title">Settings</h2>
-        </div>
-        <p style="color: var(--muted); font-size: 13.5px; margin-bottom: 12px;" id="settings-status">Key System: locked</p>
-        <div class="stage-actions">
-          <button id="settings-btn-logout" class="btn btn-ghost">Lock Key System</button>
-        </div>
-        <p style="color: var(--muted); font-size: 12.5px; margin-top: 16px;">Get Key is powered by LootLabs. Configure <code>LOOTLABS_API_TOKEN</code> as an environment variable on the server, then set your Postback URL in the LootLabs panel (Advanced tab) to: <code id="settings-postback-url">/api/getkey/postback</code></p>
-      </div>
-    </section>
-
-    <!-- ===================== TAB: DOCUMENTATION ===================== -->
-    <section class="tab-panel" id="tab-docs" role="tabpanel">
-      <section class="about">
-        <h2 class="about-title">Using Zer</h2>
-
-        <div class="about-item">
-          <h3>Obfuscator</h3>
-          <p>Paste or upload a Luau script, choose your protection options, and press Obfuscate. The output can be copied, downloaded, or shared to Rubiš/Pastebin directly from the same tab. No access key needed — this tab is open to anyone.</p>
-        </div>
-
-        <div class="about-item">
-          <h3>Key &amp; Lua Script</h3>
-          <p>Protected with an access key (the same value as your server's ADMIN_KEY). Unlock it once and the browser remembers you — you won't be asked again unless you press Lock. The Key tab issues Free or Premium license keys with a chosen duration; the Lua Script tab manages your saved scripts and generates loaders that can bundle multiple scripts together.</p>
-        </div>
-
-        <div class="about-item">
-          <h3>What does obfuscation do?</h3>
-          <p>Zer rewrites your Luau source so it still runs exactly the same, but is much harder for anyone else to read or reverse-engineer. Variable names get scrambled, strings get encrypted, and — if you turn on virtualization — your logic compiles down to bytecode that runs on a custom VM embedded in the output.</p>
-        </div>
-
-        <div class="about-item">
-          <h3>Will it change how my script runs?</h3>
-          <p>No. Obfuscation only changes the shape of the code, not its behavior. Roblox globals stay untouched by default so your game APIs keep working.</p>
-        </div>
-
-        <div class="about-item">
-          <h3>Is this unbreakable?</h3>
-          <p>No obfuscator is. Virtualization at the Max hardening grade makes static analysis and deobfuscation significantly harder, but a determined reverse-engineer can still work through it given enough time.</p>
-        </div>
-      </section>
-    </section>
-
+    <div class="header-actions">
+      <a href="#top" class="btn btn-primary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 4.4L6 9l4.1 1.6L12 15l1.9-4.4L18 9l-4.1-1.6L12 3Z"/><path d="M5 17v4M3 19h4M19 3v4M17 5h4"/></svg>
+        Start
+      </a>
+      <button class="menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
   </div>
 
-  <div class="toast-region" id="toast-region" aria-live="polite"></div>
+  <nav class="nav-mobile" id="mobile-menu" aria-label="Mobile">
+    <a href="#security">Security architecture</a>
+    <a href="#compare">Comparison</a>
+    <a href="#faq">FAQ</a>
+    <a href="#top" class="nav-mobile-cta">Start obfuscating</a>
+  </nav>
+</header>
 
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-inner reveal">
+      <p class="eyebrow">Lua &amp; Luau code protection</p>
+      <h1 class="hero-title">Protect your Lua<br>&amp; Luau scripts</h1>
+      <p class="hero-sub">Client-side code protection with custom virtualization, anti-tamper defenses, and Zer's server-side script storage — built for people shipping real Roblox and Luau projects.</p>
+
+      <div class="hero-ctas">
+        <a href="#top" class="btn btn-primary btn-lg">
+          <span class="prompt-glyph">&gt;_</span> Start obfuscating
+        </a>
+        <a href="#security" class="btn btn-ghost btn-lg">Explore features</a>
+      </div>
+
+      <ul class="trust-row">
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Client-side processing</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>No script upload required</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Tuned for Roblox &amp; Luau</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SECURITY ARCHITECTURE -->
+  <section class="section" id="security">
+    <div class="section-head reveal">
+      <p class="eyebrow">Security architecture</p>
+      <h2 class="section-title">Multiple layers, one pipeline</h2>
+      <p class="section-sub">Sensitive Lua and Luau logic passes through several layers of code transformation and runtime protection before it ever reaches a player's client.</p>
+    </div>
+
+    <div class="feature-stack">
+
+      <article class="feature-card reveal">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg>
+        </span>
+        <h3>Dynamic anti-dumper defense</h3>
+        <p>Runtime protection designed to make automated inspection and unauthorized memory analysis more difficult to carry out cleanly.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3"/></svg>
+        </span>
+        <h3>Custom VM virtualization</h3>
+        <p>Selected logic is compiled into a custom execution layer with instruction structures that are randomized on every build.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+        </span>
+        <h3>Anti-tamper &amp; runtime integrity</h3>
+        <p>Execution conditions are monitored continuously to flag unexpected runtime modifications while a script is running.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="8" width="14" height="10" rx="2"/><path d="M9 8V6a3 3 0 0 1 6 0v2M9 13h.01M15 13h.01"/></svg>
+        </span>
+        <h3>Analysis resistance</h3>
+        <p>Additional structural layers raise the effort required for automated tooling to statically analyze a protected script.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></svg>
+        </span>
+        <h3>Roblox &amp; Luau optimized</h3>
+        <p>Built around the shape of real Lua and Luau projects, keeping compatibility with common scripting patterns intact.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        </span>
+        <h3>Client-side privacy</h3>
+        <p>Code is processed directly in your browser whenever possible, keeping unnecessary server-side exposure to a minimum.</p>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section class="section" id="compare">
+    <div class="section-head reveal">
+      <p class="eyebrow">Why Zer Lua</p>
+      <h2 class="section-title">How Zer Lua compares</h2>
+      <p class="section-sub">Layered code protection works differently from a traditional minifier or a basic single-pass obfuscator.</p>
+    </div>
+
+    <div class="table-wrap reveal">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Protection capability</th>
+            <th class="col-zer">Zer Lua</th>
+            <th>Generic obfuscators</th>
+            <th>Basic minifiers</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Code transformation</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-partial">✓</span></td>
+            <td><span class="mark mark-no">×</span></td>
+          </tr>
+          <tr>
+            <td>Runtime protection</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-no">×</span></td>
+            <td><span class="mark mark-no">×</span></td>
+          </tr>
+          <tr>
+            <td>VM-based architecture</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-no">×</span></td>
+            <td><span class="mark mark-no">×</span></td>
+          </tr>
+          <tr>
+            <td>Randomized instructions</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-partial">✓</span></td>
+            <td><span class="mark mark-no">×</span></td>
+          </tr>
+          <tr>
+            <td>Anti-tamper layer</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-no">×</span></td>
+            <td><span class="mark mark-no">×</span></td>
+          </tr>
+          <tr>
+            <td>Client-side processing</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-partial">Varies</span></td>
+            <td><span class="mark mark-partial">Varies</span></td>
+          </tr>
+          <tr>
+            <td>Roblox &amp; Luau optimization</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-partial">Varies</span></td>
+            <td><span class="mark mark-no">×</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- RELEASE CARD -->
+  <section class="section">
+    <div class="release-card reveal">
+      <div class="release-top">
+        <span class="badge-pill">Latest release: v1.0</span>
+        <span class="release-date">September 2026</span>
+      </div>
+      <h3 class="release-title">Advanced virtualization &amp; execution protection</h3>
+      <p class="release-desc">New improvements to code transformation, runtime protection, and client-side processing across the obfuscation pipeline.</p>
+      <a href="#top" class="release-link">Explore changelog <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" id="faq">
+    <div class="section-head reveal">
+      <p class="eyebrow">Frequently asked questions</p>
+      <h2 class="section-title">Everything you need to know</h2>
+    </div>
+
+    <div class="faq-list reveal">
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">
+          <span>Does Zer Lua cause frame drops or execution lag in games?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="faq-a">
+          <p>Protected scripts run through an additional execution layer, so some overhead is expected. In practice this is designed to stay small for typical scripts — the more logic you route through custom virtualization, the more that trade-off matters, so it's worth testing your specific script rather than assuming zero impact.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">
+          <span>Is my script uploaded or stored on an external server?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="faq-a">
+          <p>Obfuscation itself runs client-side in your browser. If you choose to use Zer's optional server-side script storage for key-based delivery, that script is stored to serve your own loader — it isn't shared, indexed, or used for anything else.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">
+          <span>Does it support modern GUI frameworks like Fluent, Rayfield, and Maclib?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="faq-a">
+          <p>Yes — the obfuscator targets standard Lua and Luau syntax, so common UI libraries generally work as expected. Highly dynamic metatable tricks in some custom frameworks are the main edge case worth testing before shipping.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">
+          <span>How does the runtime protection handle automated analysis?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="faq-a">
+          <p>It adds friction — irregular structures and runtime checks that make scripted, automated inspection slower and less reliable. Like any protection layer, it raises the cost of analysis rather than making it categorically impossible.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">
+          <span>Is Zer Lua compatible with Roblox and Luau?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="faq-a">
+          <p>Yes — Zer Lua is built specifically around Luau's syntax and runtime behavior, with Roblox scripting patterns as the primary target.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">
+          <span>Can I use Zer Lua directly from a mobile browser?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="faq-a">
+          <p>Yes — the obfuscator runs in any modern mobile browser. For very large scripts, a desktop browser will generally feel faster, but there's no hard requirement to use one.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="section">
+    <div class="final-cta reveal">
+      <div class="final-cta-glow" aria-hidden="true"></div>
+      <h2>Ready to protect your Lua &amp; Luau scripts?</h2>
+      <p>Transform your code directly in your browser with a fast, privacy-focused workflow — no account required to get started.</p>
+      <div class="final-cta-actions">
+        <a href="#top" class="btn btn-primary btn-lg btn-block">
+          <span class="prompt-glyph">&gt;_</span> Start obfuscating
+        </a>
+        <a href="#top" class="btn btn-dark btn-lg btn-block">
+          Join official Discord <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a href="#top" class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+        </span>
+        <span class="brand-name">Zer<span class="brand-accent">Lua</span></span>
+      </a>
+      <p>Client-side Lua &amp; Luau code protection for developers who ship real projects.</p>
+    </div>
+
+    <div class="footer-links">
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="#security">Features</a>
+        <a href="#top">Changelog</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="footer-col">
+        <h4>Community</h4>
+        <a href="#top">Discord</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="#top">Privacy</a>
+        <a href="#top">Terms</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>© 2026 Zer Lua. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
 </body>
 </html>
