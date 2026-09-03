@@ -312,28 +312,37 @@ document.addEventListener("DOMContentLoaded", () => {
   const ksContent = document.getElementById("ks-content");
 
   const ksBtnCreate = document.getElementById("ks-btn-create");
-  const ksNewKeyScript = document.getElementById("ks-new-key-script");
-  const ksBtnRefresh = document.getElementById("ks-btn-refresh");
+  const ksNewKeyType = document.getElementById("ks-new-key-type");
+  const ksNewKeyDuration = document.getElementById("ks-new-key-duration");
+  const ksNewKeyLoader = document.getElementById("ks-new-key-loader");
   const ksBtnLogout = document.getElementById("ks-btn-logout");
   const ksList = document.getElementById("ks-list");
   const ksLoaderTitle = document.getElementById("ks-loader-title");
-  const ksLoaderScript = document.getElementById("ks-loader-script");
+  const ksLoaderType = document.getElementById("ks-loader-type");
+  const ksLoaderScriptMultiselect = document.getElementById("ks-loader-script-multiselect");
   const ksBtnLoader = document.getElementById("ks-btn-loader");
   const ksLoaderOutput = document.getElementById("ks-loader-output");
   const ksBtnLoaderCopy = document.getElementById("ks-btn-loader-copy");
   const ksBtnLoaderDownload = document.getElementById("ks-btn-loader-download");
+  const ksLoaderList = document.getElementById("ks-loader-list");
 
   const settingsStatus = document.getElementById("settings-status");
   const settingsBtnLogout = document.getElementById("settings-btn-logout");
 
   const scriptsGate = document.getElementById("scripts-gate");
   const scriptsContent = document.getElementById("scripts-content");
-  const scriptsBtnRefresh = document.getElementById("scripts-btn-refresh");
   const scriptsList = document.getElementById("scripts-list");
   const scriptsNewTitle = document.getElementById("scripts-new-title");
   const scriptsNewSource = document.getElementById("scripts-new-source");
   const scriptsBtnSave = document.getElementById("scripts-btn-save");
   const btnSaveScript = document.getElementById("btn-save-script");
+
+  const overviewGate = document.getElementById("overview-gate");
+  const overviewContent = document.getElementById("overview-content");
+  const overviewPeriod = document.getElementById("overview-period");
+  const overviewCards = document.getElementById("overview-cards");
+  const overviewChart = document.getElementById("overview-chart");
+  const overviewBounce = document.getElementById("overview-bounce");
 
   let ksAccessKey = null;
 
@@ -356,7 +365,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ksContent.style.display = "none";
     scriptsGate.style.display = "";
     scriptsContent.style.display = "none";
+    overviewGate.style.display = "";
+    overviewContent.style.display = "none";
     if (settingsStatus) settingsStatus.innerText = "Key System: locked";
+    stopPolling();
   }
 
   function showKeySystemUnlocked() {
@@ -364,7 +376,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ksContent.style.display = "";
     scriptsGate.style.display = "none";
     scriptsContent.style.display = "";
+    overviewGate.style.display = "none";
+    overviewContent.style.display = "";
     if (settingsStatus) settingsStatus.innerText = "Key System: unlocked";
+    startPolling();
   }
 
   function lockKeySystem() {
@@ -381,6 +396,8 @@ document.addEventListener("DOMContentLoaded", () => {
       showKeySystemUnlocked();
       renderKeys(data.keys || []);
       loadScripts();
+      loadLoaders();
+      loadOverview();
     } catch (err) {
       ksAccessKey = null;
       ksGateError.innerText = "Invalid access key.";
@@ -406,16 +423,20 @@ document.addEventListener("DOMContentLoaded", () => {
       const status = k.revoked ? "REVOKED" : (k.expiresAt && Date.now() > k.expiresAt ? "EXPIRED" : "ACTIVE");
       const statusColor = status === "ACTIVE" ? "var(--ok)" : "var(--warn)";
       const limitText = k.hwidLimit === null ? "unlimited" : k.hwidLimit;
+      const typeColor = k.type === "free" ? "var(--muted)" : "var(--signal)";
+      const typeLabel = k.type === "free" ? "FREE" : "PREMIUM";
+      const expiresText = k.expiresAt ? new Date(k.expiresAt).toLocaleString() : "never";
       return `
         <div style="border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px;">
           <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:center;">
             <span style="word-break:break-all;">${k.key}</span>
             <span style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
               <button class="ks-copy-key" data-key="${k.key}" style="background:none; border:none; color:var(--signal); cursor:pointer; font-size:11px; padding:0;">Copy</button>
+              <span style="color:${typeColor}; font-weight:600; font-size:11px;">${typeLabel}</span>
               <span style="color:${statusColor}">${status}</span>
             </span>
           </div>
-          <div style="color:var(--muted); margin-top:4px;">${k.note ? k.note + " · " : ""}Script: ${k.scriptId || "any"} · Uses: ${k.uses || 0}</div>
+          <div style="color:var(--muted); margin-top:4px;">${k.note ? k.note + " · " : ""}Loader: ${k.loaderId || "any"} · Script: ${k.scriptId || "any"} · Uses: ${k.uses || 0} · Expires: ${expiresText}</div>
 
           <button class="btn btn-ghost ks-toggle-hwid" data-key="${k.key}" style="font-size:11px; padding:6px 10px; margin-top:8px;">
             HWIDs: ${k.hwids.length}/${limitText}
@@ -558,32 +579,68 @@ document.addEventListener("DOMContentLoaded", () => {
 
   ksBtnCreate.addEventListener("click", async () => {
     try {
-      const scriptId = ksNewKeyScript.value || undefined;
+      const type = ksNewKeyType.value === "free" ? "free" : "premium";
+      const duration = ksNewKeyDuration.value || "unlimited";
+      const loaderId = ksNewKeyLoader.value || undefined;
       const rawLimit = ksNewKeyHwidLimit.value.trim();
       const hwidLimit = rawLimit === "" ? null : parseInt(rawLimit, 10);
-      const data = await ksFetch("/api/admin/keys", { method: "POST", body: JSON.stringify({ scriptId, hwidLimit }) });
+      const data = await ksFetch("/api/admin/keys", {
+        method: "POST",
+        body: JSON.stringify({ type, duration, loaderId, hwidLimit }),
+      });
       await navigator.clipboard.writeText(data.key.key).catch(() => {});
-      showToast(`Key created & copied: ${data.key.key}`, "success");
+      showToast(`${type === "free" ? "Free" : "Premium"} key created & copied: ${data.key.key}`, "success");
       await loadKeys();
     } catch (err) {
       showToast(err.message, "error");
     }
   });
 
-  ksBtnRefresh.addEventListener("click", loadKeys);
+  // Tracks which script ids are currently checked in the multi-select.
+  let selectedLoaderScriptIds = new Set();
+
+  function renderScriptMultiselect(scripts) {
+    if (!scripts.length) {
+      ksLoaderScriptMultiselect.innerHTML = `<div style="color:var(--muted); font-size:12.5px;">No saved scripts yet — add one below first.</div>`;
+      return;
+    }
+    // Preserve checked state across re-renders (e.g. from polling).
+    ksLoaderScriptMultiselect.innerHTML = scripts.map(s => `
+      <label style="display:flex; align-items:center; gap:8px; padding:7px 4px; border-bottom:1px solid var(--line); font-size:12.5px; cursor:pointer;">
+        <input type="checkbox" class="ks-loader-script-check" value="${s.id}" ${selectedLoaderScriptIds.has(s.id) ? "checked" : ""}>
+        <span>${s.title}</span>
+        <span style="color:var(--muted); margin-left:auto;">${s.id}</span>
+      </label>
+    `).join("");
+
+    ksLoaderScriptMultiselect.querySelectorAll(".ks-loader-script-check").forEach(cb => {
+      cb.addEventListener("change", () => {
+        if (cb.checked) selectedLoaderScriptIds.add(cb.value);
+        else selectedLoaderScriptIds.delete(cb.value);
+      });
+    });
+  }
 
   ksBtnLoader.addEventListener("click", async () => {
     try {
-      const res = await fetch("/api/loader/generate", {
+      const scriptIds = Array.from(selectedLoaderScriptIds);
+      if (scriptIds.length === 0) {
+        showToast("Select at least one script to include", "error");
+        return;
+      }
+      const data = await ksFetch("/api/admin/loaders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: ksLoaderTitle.value.trim() }),
+        body: JSON.stringify({
+          title: ksLoaderTitle.value.trim(),
+          loaderType: ksLoaderType.value === "free" ? "free" : "premium",
+          scriptIds,
+        }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to generate loader");
       ksLoaderOutput.value = data.loader;
       ksBtnLoaderCopy.disabled = false;
       ksBtnLoaderDownload.disabled = false;
+      showToast("Loader generated", "success");
+      await loadLoaders();
     } catch (err) {
       showToast(err.message, "error");
     }
@@ -606,6 +663,53 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   });
+
+  function renderLoaders(loaders) {
+    if (!loaders.length) {
+      ksLoaderList.innerHTML = `<div style="color:var(--muted)">No loaders generated yet.</div>`;
+      return;
+    }
+    ksLoaderList.innerHTML = loaders.map(l => {
+      const typeColor = l.type === "free" ? "var(--muted)" : "var(--signal)";
+      const created = new Date(l.createdAt).toLocaleString();
+      return `
+        <div style="border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:center;">
+            <span>${l.title}</span>
+            <span style="color:${typeColor}; font-weight:600; font-size:11px;">${l.type.toUpperCase()}</span>
+          </div>
+          <div style="color:var(--muted); margin-top:4px;">${l.id} · ${l.scriptIds.length} script(s) · created ${created}</div>
+          <div class="stage-actions" style="margin-top:8px;">
+            <button class="btn btn-ghost ks-loader-delete" data-id="${l.id}" style="font-size:11px; padding:6px 10px;">Delete</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    ksLoaderList.querySelectorAll(".ks-loader-delete").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        try {
+          await ksFetch(`/api/admin/loaders/${btn.dataset.id}`, { method: "DELETE" });
+          await loadLoaders();
+        } catch (err) { showToast(err.message, "error"); }
+      });
+    });
+  }
+
+  async function loadLoaders() {
+    try {
+      const data = await ksFetch("/api/admin/loaders");
+      const loaders = data.loaders || [];
+      renderLoaders(loaders);
+
+      const currentValue = ksNewKeyLoader.value;
+      ksNewKeyLoader.innerHTML = `<option value="">Any / not loader-scoped</option>` +
+        loaders.map(l => `<option value="${l.id}">${l.title} (${l.type})</option>`).join("");
+      ksNewKeyLoader.value = currentValue;
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  }
 
   // --- Scripts (private storage; same access key as Key System) ---
 
@@ -721,29 +825,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await ksFetch("/api/admin/scripts");
       const scripts = data.scripts || [];
       renderScripts(scripts);
-
-      const currentValue = ksNewKeyScript.value;
-      ksNewKeyScript.innerHTML = `<option value="">Any script</option>` +
-        scripts.map(s => `<option value="${s.id}">${s.title} (${s.id})</option>`).join("");
-      ksNewKeyScript.value = currentValue;
-
-      const currentLoaderValue = ksLoaderScript.value;
-      ksLoaderScript.innerHTML = `<option value="">— none —</option>` +
-        scripts.map(s => `<option value="${s.id}">${s.title}</option>`).join("");
-      ksLoaderScript.value = currentLoaderValue;
+      renderScriptMultiselect(scripts);
     } catch (err) {
       showToast(err.message, "error");
     }
   }
-
-  ksLoaderScript.addEventListener("change", () => {
-    const selected = ksLoaderScript.selectedOptions[0];
-    if (selected && selected.value) {
-      ksLoaderTitle.value = selected.textContent;
-    }
-  });
-
-  scriptsBtnRefresh.addEventListener("click", loadScripts);
 
   scriptsBtnSave.addEventListener("click", async () => {
     const source = scriptsNewSource.value.trim();
@@ -781,6 +867,153 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       showToast(err.message, "error");
     }
+  });
+
+  // --- Overview tab: cards + combined activity chart + bounce rate ---
+
+  function renderOverviewCards(totals) {
+    const cards = [
+      { label: "Clicks", value: totals.clicks },
+      { label: "Checkpoints", value: totals.checkpoints },
+      { label: "Keys Generated", value: totals.keysGenerated },
+      { label: "Keys Used", value: totals.keysUsed },
+      { label: "Script Executions", value: totals.scriptExecutions },
+    ];
+    overviewCards.innerHTML = cards.map(c => `
+      <div class="overview-card">
+        <div class="overview-card-value">${c.value.toLocaleString()}</div>
+        <div class="overview-card-label">${c.label}</div>
+      </div>
+    `).join("");
+  }
+
+  // Renders a simple dependency-free multi-line SVG chart so Overview
+  // doesn't need to pull in a charting library.
+  function renderCombinedChart(daily) {
+    const width = 640;
+    const height = 220;
+    const padding = { top: 10, right: 10, bottom: 24, left: 34 };
+    const plotW = width - padding.left - padding.right;
+    const plotH = height - padding.top - padding.bottom;
+
+    const series = [
+      { key: "clicks", color: "#7aa2ff", label: "Clicks" },
+      { key: "checkpoints", color: "#f2c14e", label: "Checkpoints" },
+      { key: "keysGenerated", color: "#4ade80", label: "Keys Generated" },
+      { key: "keysUsed", color: "#22d3ee", label: "Keys Used" },
+      { key: "scriptExecutions", color: "#f87171", label: "Script Executions" },
+    ];
+
+    const maxVal = Math.max(1, ...daily.flatMap(d => series.map(s => d[s.key] || 0)));
+    const n = daily.length;
+    const xStep = n > 1 ? plotW / (n - 1) : 0;
+
+    function pointsFor(key) {
+      return daily.map((d, i) => {
+        const x = padding.left + i * xStep;
+        const y = padding.top + plotH - (d[key] / maxVal) * plotH;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(" ");
+    }
+
+    // Sparse x-axis labels so dates don't overlap on narrow screens.
+    const labelEvery = Math.ceil(n / 6) || 1;
+    const xLabels = daily.map((d, i) => {
+      if (i % labelEvery !== 0 && i !== n - 1) return "";
+      const x = padding.left + i * xStep;
+      const short = d.date.slice(5); // MM-DD
+      return `<text x="${x.toFixed(1)}" y="${height - 6}" font-size="9" fill="var(--muted)" text-anchor="middle">${short}</text>`;
+    }).join("");
+
+    const gridLines = [0, 0.25, 0.5, 0.75, 1].map(f => {
+      const y = padding.top + plotH * (1 - f);
+      const val = Math.round(maxVal * f);
+      return `
+        <line x1="${padding.left}" y1="${y.toFixed(1)}" x2="${width - padding.right}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1" />
+        <text x="${padding.left - 6}" y="${(y + 3).toFixed(1)}" font-size="9" fill="var(--muted)" text-anchor="end">${val}</text>
+      `;
+    }).join("");
+
+    const lines = series.map(s => `<polyline points="${pointsFor(s.key)}" fill="none" stroke="${s.color}" stroke-width="2" />`).join("");
+
+    const legend = series.map(s => `
+      <span style="display:inline-flex; align-items:center; gap:5px; margin-right:14px; font-size:11.5px; color:var(--muted);">
+        <span style="width:9px; height:9px; border-radius:2px; background:${s.color}; display:inline-block;"></span>${s.label}
+      </span>
+    `).join("");
+
+    overviewChart.innerHTML = `
+      <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; display:block;">
+        ${gridLines}
+        ${lines}
+        ${xLabels}
+      </svg>
+      <div style="margin-top:8px;">${legend}</div>
+    `;
+  }
+
+  function renderBounceRate(rate) {
+    overviewBounce.innerHTML = `
+      <div class="overview-card" style="max-width:220px;">
+        <div class="overview-card-value">${rate.toFixed(1)}%</div>
+        <div class="overview-card-label">Checkpoint Bounce Rate</div>
+      </div>
+    `;
+  }
+
+  async function loadOverview() {
+    try {
+      const days = overviewPeriod.value || "30";
+      const data = await ksFetch(`/api/admin/analytics?days=${days}`);
+      renderOverviewCards(data.totals);
+      renderCombinedChart(data.daily);
+      renderBounceRate(data.checkpointBounceRate);
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  }
+
+  overviewPeriod.addEventListener("change", loadOverview);
+
+  // --- Automatic real-time updates (polling) ---
+  // Replaces manual "Refresh List" buttons: each unlocked tab refreshes
+  // itself in the background, only while that tab is actually visible so
+  // we're not hammering the API for panels the admin isn't looking at.
+  let pollHandle = null;
+  const POLL_INTERVAL_MS = 4000;
+
+  function activeTabName() {
+    const active = document.querySelector(".tab-btn.is-active");
+    return active ? active.dataset.tab : null;
+  }
+
+  function startPolling() {
+    if (pollHandle) return;
+    pollHandle = setInterval(() => {
+      if (!ksAccessKey) return;
+      const tab = activeTabName();
+      if (tab === "keysystem") loadKeys();
+      else if (tab === "scripts") { loadScripts(); loadLoaders(); }
+      else if (tab === "overview") loadOverview();
+    }, POLL_INTERVAL_MS);
+  }
+
+  function stopPolling() {
+    if (pollHandle) {
+      clearInterval(pollHandle);
+      pollHandle = null;
+    }
+  }
+
+  // Refresh immediately when switching into a data tab, rather than
+  // waiting for the next poll tick.
+  tabButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (!ksAccessKey) return;
+      if (btn.dataset.tab === "keysystem") loadKeys();
+      else if (btn.dataset.tab === "scripts") { loadScripts(); loadLoaders(); }
+      else if (btn.dataset.tab === "overview") loadOverview();
+    });
   });
 
   // Auto-unlock silently if we already have a verified key from before

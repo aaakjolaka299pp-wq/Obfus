@@ -25,12 +25,51 @@
     <div class="signal-rail" id="signal-rail" aria-hidden="true"></div>
 
     <nav class="tab-bar" role="tablist" aria-label="Sections">
+      <button class="tab-btn" data-tab="overview" role="tab" aria-selected="false">Overview</button>
       <button class="tab-btn is-active" data-tab="obfuscator" role="tab" aria-selected="true">Obfuscator</button>
-      <button class="tab-btn" data-tab="keysystem" role="tab" aria-selected="false">Key System</button>
-      <button class="tab-btn" data-tab="scripts" role="tab" aria-selected="false">Scripts</button>
+      <button class="tab-btn" data-tab="keysystem" role="tab" aria-selected="false">Key</button>
+      <button class="tab-btn" data-tab="scripts" role="tab" aria-selected="false">Lua Script</button>
       <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false">Settings</button>
       <button class="tab-btn" data-tab="docs" role="tab" aria-selected="false">Documentation</button>
     </nav>
+
+    <!-- ===================== TAB: OVERVIEW (protected) ===================== -->
+    <section class="tab-panel" id="tab-overview" role="tabpanel">
+
+      <div class="stage" id="overview-gate">
+        <div class="stage-head">
+          <h2 class="stage-title">Access Key required</h2>
+        </div>
+        <p style="color: var(--muted); font-size: 13.5px;">Unlock the Key tab first — Overview uses the same access key.</p>
+      </div>
+
+      <div class="stage" id="overview-content" style="display:none;">
+        <div class="stage-head">
+          <h2 class="stage-title">Overview</h2>
+          <div class="select-list" style="margin:0;">
+            <select id="overview-period" class="select-input" style="width:auto;">
+              <option value="7">Last 7 days</option>
+              <option value="14">Last 14 days</option>
+              <option value="30" selected>Last 30 days</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="overview-cards" class="overview-cards"></div>
+
+        <div style="margin-top:22px; padding-top:16px; border-top:1px solid var(--line);">
+          <div class="stage-title" style="margin-bottom:4px;">Combined activity</div>
+          <p style="color:var(--muted); font-size:12.5px; margin-bottom:10px;">Clicks, checkpoints, key generation, key usage, and script executions over the selected period.</p>
+          <div id="overview-chart" class="overview-chart"></div>
+        </div>
+
+        <div style="margin-top:22px; padding-top:16px; border-top:1px solid var(--line);">
+          <div class="stage-title" style="margin-bottom:4px;">Checkpoint bounce rate</div>
+          <p style="color:var(--muted); font-size:12.5px; margin-bottom:10px;">Share of users who completed at least one checkpoint but never finished the full task list (no key was issued for that session).</p>
+          <div id="overview-bounce" class="overview-bounce"></div>
+        </div>
+      </div>
+    </section>
 
     <!-- ===================== TAB: OBFUSCATOR (public) ===================== -->
     <section class="tab-panel is-active" id="tab-obfuscator" role="tabpanel">
@@ -203,14 +242,31 @@ print("Square of 5 is: " .. tostring(square(5)))</textarea>
 
       <div class="stage" id="ks-content" style="display:none;">
         <div class="stage-head">
-          <h2 class="stage-title">Key System</h2>
+          <h2 class="stage-title">Key</h2>
         </div>
 
         <div class="select-list">
           <label class="select-row">
-            <span class="select-row-label">Scope new key to script</span>
-            <select id="ks-new-key-script" class="select-input">
-              <option value="">Any script</option>
+            <span class="select-row-label">Key type</span>
+            <select id="ks-new-key-type" class="select-input">
+              <option value="premium" selected>Premium</option>
+              <option value="free">Free</option>
+            </select>
+          </label>
+          <label class="select-row">
+            <span class="select-row-label">Duration</span>
+            <select id="ks-new-key-duration" class="select-input">
+              <option value="1hour">1 Hour</option>
+              <option value="1day">1 Day</option>
+              <option value="1month">1 Month</option>
+              <option value="1year">1 Year</option>
+              <option value="unlimited" selected>Unlimited / Never expires</option>
+            </select>
+          </label>
+          <label class="select-row">
+            <span class="select-row-label">Scope new key to loader (optional)</span>
+            <select id="ks-new-key-loader" class="select-input">
+              <option value="">Any / not loader-scoped</option>
             </select>
           </label>
           <label class="select-row">
@@ -220,60 +276,34 @@ print("Square of 5 is: " .. tostring(square(5)))</textarea>
         </div>
         <div class="stage-actions" style="margin-top: 8px;">
           <button id="ks-btn-create" class="btn btn-primary">Create Key</button>
-          <button id="ks-btn-refresh" class="btn btn-ghost">Refresh List</button>
           <button id="ks-btn-logout" class="btn btn-ghost">Lock</button>
         </div>
 
-        <div id="ks-list" style="margin-top: 14px; font-family: var(--font-mono); font-size: 12.5px;"></div>
+        <p id="ks-live-indicator" style="color: var(--muted); font-size: 11.5px; margin-top: 10px;">● Updates automatically</p>
 
-        <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);">
-          <div class="stage-title" style="margin-bottom: 10px;">Generate Loader</div>
-          <p style="color: var(--muted); font-size: 12.5px; margin-bottom: 10px;">The loader detects the game's Place ID itself and requests access from the server — no script URL needed. Make sure the script is saved in the Scripts tab with the right Place ID attached first.</p>
-          <div class="select-list">
-            <label class="select-row">
-              <span class="select-row-label">Loader title</span>
-              <input type="text" id="ks-loader-title" class="select-input" placeholder="Zer Protected Script">
-            </label>
-            <label class="select-row">
-              <span class="select-row-label">Prefill title from script (optional)</span>
-              <select id="ks-loader-script" class="select-input">
-                <option value="">— none —</option>
-              </select>
-            </label>
-          </div>
-          <div class="stage-actions" style="margin-top: 10px;">
-            <button id="ks-btn-loader" class="btn btn-primary">Generate Loader</button>
-          </div>
-          <textarea id="ks-loader-output" class="code-area" readonly style="margin-top: 12px; min-height: 120px;" placeholder="-- Generated loader will appear here..."></textarea>
-          <div class="stage-actions" style="margin-top: 10px;">
-            <button id="ks-btn-loader-copy" class="btn btn-ghost" disabled>Copy</button>
-            <button id="ks-btn-loader-download" class="btn btn-ghost" disabled>Download</button>
-          </div>
-        </div>
+        <div id="ks-list" style="margin-top: 8px; font-family: var(--font-mono); font-size: 12.5px;"></div>
       </div>
     </section>
 
-    <!-- ===================== TAB: SCRIPTS (protected) ===================== -->
+    <!-- ===================== TAB: LUA SCRIPT (protected) ===================== -->
     <section class="tab-panel" id="tab-scripts" role="tabpanel">
 
       <div class="stage" id="scripts-gate">
         <div class="stage-head">
           <h2 class="stage-title">Access Key required</h2>
         </div>
-        <p style="color: var(--muted); font-size: 13.5px;">Unlock the Key System tab first — Scripts uses the same access key.</p>
+        <p style="color: var(--muted); font-size: 13.5px;">Unlock the Key tab first — Lua Script uses the same access key.</p>
       </div>
 
       <div class="stage" id="scripts-content" style="display:none;">
         <div class="stage-head">
-          <h2 class="stage-title">Scripts</h2>
+          <h2 class="stage-title">Lua Script</h2>
         </div>
-        <p style="color: var(--muted); font-size: 13px; margin-bottom: 12px;">Obfuscated scripts stored privately on the server. Nothing here is reachable by a public URL yet — that comes once the Loader Key System (Phase 4) can check a key before serving anything.</p>
+        <p style="color: var(--muted); font-size: 13px; margin-bottom: 12px;">Obfuscated scripts stored privately on the server. Nothing here is reachable by a public URL — access is only ever granted through a generated loader after a valid key check.</p>
 
-        <div class="stage-actions">
-          <button id="scripts-btn-refresh" class="btn btn-ghost">Refresh List</button>
-        </div>
+        <p id="scripts-live-indicator" style="color: var(--muted); font-size: 11.5px;">● Updates automatically</p>
 
-        <div id="scripts-list" style="margin-top: 14px; font-family: var(--font-mono); font-size: 12.5px;"></div>
+        <div id="scripts-list" style="margin-top: 8px; font-family: var(--font-mono); font-size: 12.5px;"></div>
 
         <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);">
           <div class="stage-title" style="margin-bottom: 10px;">New Script</div>
@@ -287,6 +317,44 @@ print("Square of 5 is: " .. tostring(square(5)))</textarea>
           <div class="stage-actions" style="margin-top: 10px;">
             <button id="scripts-btn-save" class="btn btn-primary">Save Script</button>
           </div>
+        </div>
+
+        <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);">
+          <div class="stage-title" style="margin-bottom: 10px;">Generate Loader</div>
+          <p style="color: var(--muted); font-size: 12.5px; margin-bottom: 10px;">A loader can bundle one or more saved scripts below — every selected script gets checked and delivered together. Free loaders show a "Get Key" button (LootLabs); Premium loaders only accept a key you generate yourself in the Key tab.</p>
+
+          <div class="select-list">
+            <label class="select-row">
+              <span class="select-row-label">Loader title</span>
+              <input type="text" id="ks-loader-title" class="select-input" placeholder="Zer Protected Script">
+            </label>
+            <label class="select-row">
+              <span class="select-row-label">Loader type</span>
+              <select id="ks-loader-type" class="select-input">
+                <option value="free">Free (LootLabs Get Key)</option>
+                <option value="premium" selected>Premium (key only, no Get Key button)</option>
+              </select>
+            </label>
+          </div>
+
+          <div style="margin-top:10px;">
+            <span class="select-row-label" style="display:block; margin-bottom:6px;">Scripts to include (select one or more)</span>
+            <div id="ks-loader-script-multiselect" class="multiselect"></div>
+          </div>
+
+          <div class="stage-actions" style="margin-top: 10px;">
+            <button id="ks-btn-loader" class="btn btn-primary">Generate Loader</button>
+          </div>
+          <textarea id="ks-loader-output" class="code-area" readonly style="margin-top: 12px; min-height: 120px;" placeholder="-- Generated loader will appear here..."></textarea>
+          <div class="stage-actions" style="margin-top: 10px;">
+            <button id="ks-btn-loader-copy" class="btn btn-ghost" disabled>Copy</button>
+            <button id="ks-btn-loader-download" class="btn btn-ghost" disabled>Download</button>
+          </div>
+        </div>
+
+        <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);">
+          <div class="stage-title" style="margin-bottom: 10px;">Saved Loaders</div>
+          <div id="ks-loader-list" style="font-family: var(--font-mono); font-size: 12.5px;"></div>
         </div>
       </div>
     </section>
@@ -316,8 +384,8 @@ print("Square of 5 is: " .. tostring(square(5)))</textarea>
         </div>
 
         <div class="about-item">
-          <h3>Key System</h3>
-          <p>Protected with an access key (the same value as your server's ADMIN_KEY). Unlock it once and the browser remembers you — you won't be asked again unless you press Lock. From here you can issue license keys and generate a Roblox loader script that checks a key before running your obfuscated payload.</p>
+          <h3>Key &amp; Lua Script</h3>
+          <p>Protected with an access key (the same value as your server's ADMIN_KEY). Unlock it once and the browser remembers you — you won't be asked again unless you press Lock. The Key tab issues Free or Premium license keys with a chosen duration; the Lua Script tab manages your saved scripts and generates loaders that can bundle multiple scripts together.</p>
         </div>
 
         <div class="about-item">

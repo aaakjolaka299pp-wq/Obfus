@@ -388,6 +388,55 @@ body {
   outline-offset: 1px;
 }
 
+/* Overview tab */
+
+.overview-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.overview-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--ink);
+}
+
+.overview-card-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.overview-card-label {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.overview-chart {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.overview-bounce {
+  display: flex;
+}
+
+/* Multi-select checklist (Generate Loader script picker) */
+
+.multiselect {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 10px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
 /* About / FAQ */
 
 .about {
