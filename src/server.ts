@@ -18,6 +18,8 @@ import { generateAntiTamperPrelude } from "./obfuscator/AntiTamper.js";
 import * as KeyStore from "./keystore/KeyStore.js";
 import * as ScriptStore from "./keystore/ScriptStore.js";
 import * as GetKeyStore from "./keystore/GetKeyStore.js";
+import * as LoaderStore from "./keystore/LoaderStore.js";
+import * as Analytics from "./keystore/AnalyticsStore.js";
 import { generateLoader } from "./keystore/LoaderGenerator.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -287,15 +289,35 @@ function requireAdmin(req: express.Request, res: express.Response): boolean {
   return true;
 }
 
+// Duration presets the dashboard's Key tab can pick from. "unlimited" maps
+// to no expiresInMs at all (never expires).
+const KEY_DURATION_MS: Record<string, number | undefined> = {
+  "1hour": 60 * 60 * 1000,
+  "1day": 24 * 60 * 60 * 1000,
+  "1month": 30 * 24 * 60 * 60 * 1000,
+  "1year": 365 * 24 * 60 * 60 * 1000,
+  "unlimited": undefined,
+};
+
 app.post("/api/admin/keys", (req: express.Request, res: express.Response) => {
   if (!requireAdmin(req, res)) return;
-  const { note, expiresInDays, scriptId, hwidLimit } = req.body || {};
+  const { note, expiresInDays, duration, scriptId, loaderId, hwidLimit, type } = req.body || {};
+
+  let expiresInMs: number | undefined;
+  if (typeof duration === "string" && duration in KEY_DURATION_MS) {
+    expiresInMs = KEY_DURATION_MS[duration];
+  }
+
   const record = KeyStore.createKey({
     note: typeof note === "string" ? note : undefined,
     expiresInDays: typeof expiresInDays === "number" ? expiresInDays : undefined,
+    expiresInMs,
     scriptId: typeof scriptId === "string" && scriptId.trim() ? scriptId.trim() : null,
+    loaderId: typeof loaderId === "string" && loaderId.trim() ? loaderId.trim() : null,
     hwidLimit: hwidLimit === null ? null : (typeof hwidLimit === "number" ? hwidLimit : undefined),
+    type: type === "free" ? "free" : "premium",
   });
+  Analytics.recordEvent("key_generated", { scriptId: record.scriptId, keyType: record.type });
   res.json({ key: record });
 });
 
@@ -363,26 +385,81 @@ app.post("/api/admin/keys/:key/hwid-limit", (req: express.Request, res: express.
 // Called from the Roblox loader script itself — no admin auth, since the
 // customer's game client calls this directly.
 app.post("/api/keys/check", (req: express.Request, res: express.Response) => {
-  const { key, hwid } = req.body || {};
+  const { key, hwid, loaderType } = req.body || {};
   if (typeof key !== "string" || typeof hwid !== "string") {
     return res.status(400).json({ valid: false, reason: "BAD_REQUEST" }) as any;
   }
-  const result = KeyStore.checkKey(key.trim(), hwid.trim());
+  const normalizedLoaderType = loaderType === "free" || loaderType === "premium" ? loaderType : undefined;
+  const result = KeyStore.checkKey(key.trim(), hwid.trim(), undefined, normalizedLoaderType);
   res.json(result);
 });
 
-// The core secure-delivery endpoint: Place ID + Key + HWID in, obfuscated
-// source out — but ONLY once everything checks out. This is the only way
-// the loader ever receives the actual script; there is no separate raw
-// URL to fetch it from.
+// The core secure-delivery endpoint: Place ID + Key + HWID (+ one or more
+// Script IDs) in, obfuscated source(s) out — but ONLY once everything
+// checks out. This is the only way a loader ever receives the actual
+// script; there is no separate raw URL to fetch it from.
+//
+// Back-compat: a loader generated before multi-script support sends a
+// single `placeId` and expects a single `source` back (resolved via
+// ScriptStore.findScriptByPlaceId, same as before). Newer loaders send
+// `scriptIds` (an array) and `loaderType`, and get back a `sources` array
+// in the same order.
 app.post("/api/access", (req: express.Request, res: express.Response) => {
   const ip = req.ip || req.socket.remoteAddress || "unknown";
   if (isRateLimited(ip, 10, 60_000)) {
     return res.status(429).json({ valid: false, reason: "RATE_LIMITED" }) as any;
   }
 
-  const { key, hwid, placeId } = req.body || {};
-  if (typeof key !== "string" || typeof hwid !== "string" || typeof placeId !== "string") {
+  const { key, hwid, placeId, scriptIds, loaderType } = req.body || {};
+  if (typeof key !== "string" || typeof hwid !== "string") {
+    return res.status(400).json({ valid: false, reason: "BAD_REQUEST" }) as any;
+  }
+  const normalizedLoaderType = loaderType === "free" || loaderType === "premium" ? loaderType : undefined;
+
+  // --- Multi-script path (current loaders) ---
+  if (Array.isArray(scriptIds) && scriptIds.length > 0) {
+    const ids = scriptIds.filter((id: unknown): id is string => typeof id === "string" && id.trim() !== "");
+    if (ids.length === 0) {
+      return res.status(400).json({ valid: false, reason: "BAD_REQUEST" }) as any;
+    }
+
+    const scripts = ids.map((id) => ScriptStore.getScript(id));
+    const missingIndex = scripts.findIndex((s) => !s);
+    if (missingIndex !== -1) {
+      return res.status(404).json({ valid: false, reason: "SCRIPT_MISSING" }) as any;
+    }
+    const disabledIndex = scripts.findIndex((s) => s!.status !== "enabled");
+    if (disabledIndex !== -1) {
+      return res.status(403).json({ valid: false, reason: "SCRIPT_DISABLED" }) as any;
+    }
+
+    // Validate against the FIRST script id for legacy single-script scoping;
+    // loader-scoped keys are validated against every id inside the loader
+    // (see KeyStore.checkKey / LoaderStore).
+    const result = KeyStore.checkKey(key.trim(), hwid.trim(), ids[0], normalizedLoaderType);
+    if (!result.valid) {
+      const reason = "reason" in result ? result.reason : "NOT_FOUND";
+      return res.status(403).json({ valid: false, reason }) as any;
+    }
+    // If more than one script id was requested, confirm every one of them
+    // is actually covered by this key (not just the first).
+    if (ids.length > 1) {
+      const allCovered = ids.every((id) => KeyStore.checkKey(key.trim(), hwid.trim(), id, normalizedLoaderType).valid);
+      if (!allCovered) {
+        return res.status(403).json({ valid: false, reason: "WRONG_SCRIPT" }) as any;
+      }
+    }
+
+    Analytics.recordEvent("key_used", { keyType: normalizedLoaderType || null });
+    for (const id of ids) Analytics.recordEvent("script_exec", { scriptId: id });
+
+    console.log(`[API] /api/access - granted ${ids.length} script(s) for key ${key.slice(0, 8)}...`);
+    res.json({ valid: true, sources: scripts.map((s) => s!.source) });
+    return;
+  }
+
+  // --- Legacy single-script path (Place-ID based loaders) ---
+  if (typeof placeId !== "string") {
     return res.status(400).json({ valid: false, reason: "BAD_REQUEST" }) as any;
   }
 
@@ -394,9 +471,10 @@ app.post("/api/access", (req: express.Request, res: express.Response) => {
     return res.status(403).json({ valid: false, reason: "SCRIPT_DISABLED" }) as any;
   }
 
-  const result = KeyStore.checkKey(key.trim(), hwid.trim(), script.id);
+  const result = KeyStore.checkKey(key.trim(), hwid.trim(), script.id, normalizedLoaderType);
   if (!result.valid) {
-    return res.status(403).json({ valid: false, reason: result.reason }) as any;
+    const reason = "reason" in result ? result.reason : "NOT_FOUND";
+    return res.status(403).json({ valid: false, reason }) as any;
   }
 
   const full = ScriptStore.getScript(script.id);
@@ -404,8 +482,11 @@ app.post("/api/access", (req: express.Request, res: express.Response) => {
     return res.status(500).json({ valid: false, reason: "SCRIPT_MISSING" }) as any;
   }
 
+  Analytics.recordEvent("key_used", { keyType: normalizedLoaderType || null });
+  Analytics.recordEvent("script_exec", { scriptId: script.id });
+
   console.log(`[API] /api/access - granted script "${script.title}" for place ${placeId}`);
-  res.json({ valid: true, source: full.source });
+  res.json({ valid: true, source: full.source, sources: [full.source] });
 });
 
 // --- LootLabs "Get Key" flow ---
@@ -433,6 +514,7 @@ app.post("/api/getkey/start", async (req: express.Request, res: express.Response
   }
 
   const session = GetKeyStore.createSession(script.id);
+  Analytics.recordEvent("click", { scriptId: script.id, sessionToken: session.token });
   const resultUrl = `${req.protocol}://${req.get("host")}/getkey-result?token=${session.token}`;
 
   try {
@@ -480,6 +562,17 @@ app.post("/api/getkey/start", async (req: express.Request, res: express.Response
   }
 });
 
+// Dedup guard: LootLabs sends one postback per completed task, each with
+// its own unique_id. Without this, a retried/duplicate delivery of the
+// same task would inflate the Checkpoints count.
+const seenPostbackIds = new Set<string>();
+
+// Free keys issued through LootLabs default to a 1-day expiry unless
+// overridden via LOOTLABS_KEY_DURATION_MS.
+const LOOTLABS_KEY_DURATION_MS = process.env.LOOTLABS_KEY_DURATION_MS
+  ? parseInt(process.env.LOOTLABS_KEY_DURATION_MS, 10)
+  : 24 * 60 * 60 * 1000; // 1 day
+
 app.get("/api/getkey/postback", (req: express.Request, res: express.Response) => {
   const clickId = req.query.click_id;
   // LootLabs pings this URL (without click_id) to validate it before
@@ -497,9 +590,25 @@ app.get("/api/getkey/postback", (req: express.Request, res: express.Response) =>
     return res.status(200).send("OK") as any;
   }
 
+  // LootLabs fires this postback once per completed task in the locker —
+  // each one is a "checkpoint" for analytics purposes, deduplicated by
+  // unique_id so retried deliveries don't double-count.
+  const uniqueId = typeof req.query.unique_id === "string" ? req.query.unique_id : null;
+  const dedupKey = uniqueId ? `${clickId}:${uniqueId}` : null;
+  if (!dedupKey || !seenPostbackIds.has(dedupKey)) {
+    if (dedupKey) seenPostbackIds.add(dedupKey);
+    Analytics.recordEvent("checkpoint", { scriptId: session.scriptId, sessionToken: clickId });
+  }
+
   if (session.status === "pending") {
-    const record = KeyStore.createKey({ note: "Issued via LootLabs Get Key", scriptId: session.scriptId });
+    const record = KeyStore.createKey({
+      note: "Issued via LootLabs Get Key",
+      scriptId: session.scriptId,
+      type: "free",
+      expiresInMs: LOOTLABS_KEY_DURATION_MS || undefined,
+    });
     GetKeyStore.completeSession(clickId, record.key, req.ip || null);
+    Analytics.recordEvent("key_generated", { scriptId: session.scriptId, keyType: "free", sessionToken: clickId });
     console.log(`[API] /api/getkey/postback - issued key for session ${clickId}`);
   }
 
@@ -642,18 +751,75 @@ app.get("/api/admin/places/:placeId", (req: express.Request, res: express.Respon
   res.json({ script: meta || null });
 });
 
+app.post("/api/admin/loaders", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const { title, loaderType, scriptIds, keyFileName } = req.body || {};
+
+  const type: "free" | "premium" = loaderType === "free" ? "free" : "premium";
+  const ids = Array.isArray(scriptIds) ? scriptIds.filter((id: unknown) => typeof id === "string" && id.trim()) : [];
+  if (ids.length === 0) {
+    return res.status(400).json({ error: "Select at least one script for this loader." }) as any;
+  }
+  for (const id of ids) {
+    if (!ScriptStore.getScript(id)) {
+      return res.status(404).json({ error: `Script not found: ${id}` }) as any;
+    }
+  }
+
+  const loaderTitle = typeof title === "string" && title.trim() ? title.trim() : "Zer Protected Script";
+  const loaderRecord = LoaderStore.createLoader({ title: loaderTitle, type, scriptIds: ids });
+
+  const base = `${req.protocol}://${req.get("host")}`;
+  const loader = generateLoader({
+    title: loaderTitle,
+    loaderType: type,
+    scriptIds: ids,
+    accessUrl: `${base}/api/access`,
+    getKeyStartUrl: `${base}/api/getkey/start`,
+    getKeyStatusBaseUrl: `${base}/api/getkey/status/`,
+    keyFileName: typeof keyFileName === "string" && keyFileName.trim() ? keyFileName : "zer_key.txt",
+  });
+
+  res.json({ loader, loaderConfig: loaderRecord, accessUrl: `${base}/api/access` });
+});
+
+app.get("/api/admin/loaders", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  res.json({ loaders: LoaderStore.listLoaders() });
+});
+
+app.delete("/api/admin/loaders/:id", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const ok = LoaderStore.deleteLoader(String(req.params.id));
+  if (!ok) return res.status(404).json({ error: "Loader not found" }) as any;
+  res.json({ success: true });
+});
+
+// Legacy endpoint kept for any old dashboard tab / bookmarked script still
+// calling it — always produces a single-script, Free-type-agnostic loader
+// the old way. New code should use POST /api/admin/loaders instead.
 app.post("/api/loader/generate", (req: express.Request, res: express.Response) => {
   const { title, keyFileName } = req.body || {};
   const base = `${req.protocol}://${req.get("host")}`;
   const accessUrl = `${base}/api/access`;
   const loader = generateLoader({
     title: typeof title === "string" && title.trim() ? title : "Zer Protected Script",
+    loaderType: "premium",
+    scriptIds: [],
     accessUrl,
     getKeyStartUrl: `${base}/api/getkey/start`,
     getKeyStatusBaseUrl: `${base}/api/getkey/status/`,
     keyFileName: typeof keyFileName === "string" && keyFileName.trim() ? keyFileName : "zer_key.txt",
   });
   res.json({ loader, accessUrl });
+});
+
+// --- Overview / analytics ---
+app.get("/api/admin/analytics", (req: express.Request, res: express.Response) => {
+  if (!requireAdmin(req, res)) return;
+  const daysRaw = parseInt(String(req.query.days || "30"), 10);
+  const days = daysRaw === 7 || daysRaw === 14 ? daysRaw : 30;
+  res.json(Analytics.getOverview(days as 7 | 14 | 30));
 });
 
 app.post("/api/paste", async (req: express.Request, res: express.Response) => {
