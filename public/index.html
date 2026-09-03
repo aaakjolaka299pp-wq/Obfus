@@ -70,12 +70,77 @@
         <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Tuned for Roblox &amp; Luau</li>
       </ul>
     </div>
+
+    <div class="preview-wrap reveal">
+      <div class="preview-card">
+        <div class="preview-head">
+          <div class="preview-dots" aria-hidden="true">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-amber"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <div class="preview-tabs" role="tablist" aria-label="Code preview">
+            <button class="preview-tab is-active" id="tab-raw" role="tab" aria-selected="true" aria-controls="panel-raw" data-target="raw">Raw Source</button>
+            <button class="preview-tab" id="tab-vm" role="tab" aria-selected="false" aria-controls="panel-vm" data-target="vm">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+              Zer Lua VM
+            </button>
+          </div>
+        </div>
+
+        <div class="preview-body">
+          <pre class="preview-panel is-active" id="panel-raw" role="tabpanel" aria-labelledby="tab-raw"><code><span class="tok-comment">-- Zer Lua</span>
+<span class="tok-comment">-- Press "Obfuscate script" to protect this example.</span>
+
+<span class="tok-kw">local</span> message = <span class="tok-str">"Hello, world!"</span>
+<span class="tok-fn">print</span>(message)
+
+<span class="tok-kw">local</span> <span class="tok-kw">function</span> <span class="tok-fn">square</span>(n)
+    <span class="tok-kw">return</span> n * n
+<span class="tok-kw">end</span>
+
+<span class="tok-fn">print</span>(<span class="tok-str">"Square of 5 is: "</span> .. <span class="tok-fn">tostring</span>(<span class="tok-fn">square</span>(<span class="tok-num">5</span>)))</code></pre>
+
+          <pre class="preview-panel" id="panel-vm" role="tabpanel" aria-labelledby="tab-vm" hidden><code><span class="tok-comment">--[[
+######   ######   ##### 
+    ##   #        #    #
+   ##    #####    ##### 
+  ##     #        #   # 
+######   ######   #    #
+
+By https://zerserver.up.railway.app/ | ZerLuaProtection Just like VMProtect, but for Lua.
+]]</span>
+
+<span class="tok-kw">return</span>(<span class="tok-kw">function</span>(...)
+<span class="tok-kw">local</span> _2a,_1n=string.char,rawget
+<span class="tok-kw">local</span> _0m,_1u,_4x=bit32.bxor,assert,loadstring
+<span class="tok-kw">local</span> _2x,_5v,_3a=pcall,string.sub,type
+<span class="tok-kw">local</span> _2g=string.pack
+<span class="tok-kw">local</span> _1t=string.gsub
+<span class="tok-kw">local</span> _0j,_3r=string.byte,bit32.band
+<span class="tok-kw">local</span> _3d=tostring
+<span class="tok-kw">local</span> _2d=table.concat
+<span class="tok-kw">local</span> _0w=string.find
+<span class="tok-kw">local</span> _1x={(<span class="tok-num">1+28</span>),(<span class="tok-num">9*22-143</span>),(<span class="tok-num">632-397</span>),(<span class="tok-num">704-458</span>),(<span class="tok-num">206-153</span>),(<span class="tok-num">9*16+7</span>),(<span class="tok-num">283-148</span>),(<span class="tok-num">759-561</span>),...}
+<span class="tok-kw">local</span> <span class="tok-kw">function</span> _0a(data)
+    <span class="tok-kw">local</span> _0t={}
+    <span class="tok-kw">for</span> _0i=<span class="tok-num">1</span>,#data <span class="tok-kw">do</span>
+        _0t[_0i]=_2a(_0m(_0j(data,_0i),_3r(_0i+<span class="tok-num">40</span>,<span class="tok-num">0xFF</span>)))
+    <span class="tok-kw">end</span>
+    <span class="tok-kw">return</span> _2d(_0t)
+<span class="tok-kw">end</span>
+<span class="tok-comment">-- ...output continues (33.8kb) — VM dispatch table, opcode handlers, and encoded string pool omitted from this preview</span></code></pre>
+        </div>
+      </div>
+      <p class="preview-caption">Illustrative example — visual demonstration only, not executed on this page.</p>
+    </div>
   </section>
 
   <!-- SECURITY ARCHITECTURE -->
   <section class="section" id="security">
     <div class="section-head reveal">
       <p class="eyebrow">Security architecture</p>
+
       <h2 class="section-title">Multiple layers, one pipeline</h2>
       <p class="section-sub">Sensitive Lua and Luau logic passes through several layers of code transformation and runtime protection before it ever reaches a player's client.</p>
     </div>

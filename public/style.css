@@ -302,6 +302,120 @@ img, svg { display: block; }
 
 .trust-row svg { color: var(--primary); flex-shrink: 0; }
 
+/* ---------- Code preview (hero) ---------- */
+
+.preview-wrap {
+  max-width: 720px;
+  margin: 40px auto 0;
+  padding: 0 20px;
+}
+
+.preview-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--primary-line);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.05), 0 30px 60px -30px rgba(52, 211, 153, 0.35);
+  overflow: hidden;
+}
+
+.preview-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.preview-dots {
+  display: flex;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
+.dot-red { background: #F3455B; }
+.dot-amber { background: #F5B94D; }
+.dot-green { background: #34D399; }
+
+.preview-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 1;
+}
+
+.preview-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 7px 13px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.preview-tab:hover { color: var(--text); }
+
+.preview-tab.is-active {
+  color: var(--primary);
+  background: var(--primary-wash);
+  border-color: var(--primary-line);
+}
+
+.preview-body {
+  position: relative;
+}
+
+.preview-panel {
+  margin: 0;
+  padding: 20px;
+  max-height: 340px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre;
+  -webkit-overflow-scrolling: touch;
+  animation: preview-fade-in 0.22s ease;
+}
+
+@keyframes preview-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preview-panel { animation: none; }
+}
+
+.preview-panel[hidden] { display: none; }
+
+.tok-comment { color: var(--muted-2); }
+.tok-kw { color: #7DD3FC; }
+.tok-fn { color: #34D399; }
+.tok-str { color: #F5B94D; }
+.tok-num { color: #C4B5FD; }
+.tok-prop { color: #F4F6F5; }
+
+.preview-caption {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted-2);
+}
+
 /* ---------- Sections ---------- */
 
 .section {

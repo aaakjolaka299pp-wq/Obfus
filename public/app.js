@@ -18,6 +18,27 @@ document.addEventListener("DOMContentLoaded", () => {
     link.addEventListener("click", closeMenu);
   });
 
+  // --- Code preview tabs (Raw Source / Zer Lua VM) ---
+  const previewTabs = document.querySelectorAll(".preview-tab");
+
+  previewTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const target = tab.dataset.target;
+
+      previewTabs.forEach((t) => {
+        const isActive = t === tab;
+        t.classList.toggle("is-active", isActive);
+        t.setAttribute("aria-selected", String(isActive));
+      });
+
+      document.querySelectorAll(".preview-panel").forEach((panel) => {
+        const isActive = panel.id === `panel-${target}`;
+        panel.classList.toggle("is-active", isActive);
+        panel.hidden = !isActive;
+      });
+    });
+  });
+
   // --- FAQ accordion ---
   document.querySelectorAll(".faq-item").forEach((item) => {
     const btn = item.querySelector(".faq-q");
