@@ -171,6 +171,19 @@ app.use(express.json({ limit: "25mb" }));
 
 app.use(express.static(join(__dirname, "..", "public")));
 
+// Landing page is the site's main entry point.
+app.get("/", (_req: express.Request, res: express.Response) => {
+  res.sendFile(join(__dirname, "..", "public", "index.html"));
+});
+
+// Obfuscator dashboard — reached via the landing page's "Start obfuscating"
+// CTA, or by visiting the URL directly. Kept as its own route (not just a
+// static folder passthrough) so /obfuscator works without a trailing
+// index.html and so future auth/redirect logic has a single place to live.
+app.get("/obfuscator", (_req: express.Request, res: express.Response) => {
+  res.sendFile(join(__dirname, "..", "public", "obfuscator", "index.html"));
+});
+
 app.post("/api/validate", (req: express.Request, res: express.Response) => {
   try {
     const { code } = req.body;
