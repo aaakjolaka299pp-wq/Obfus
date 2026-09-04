@@ -79,17 +79,20 @@ img, svg { display: block; }
 .header-inner {
   max-width: var(--container);
   margin: 0 auto;
-  padding: 13px 20px;
+  padding: 13px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
+  flex-wrap: nowrap;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .brand-mark {
@@ -110,6 +113,9 @@ img, svg { display: block; }
   font-size: 16.5px;
   color: var(--text);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .brand-accent { color: var(--primary); }
@@ -140,6 +146,7 @@ img, svg { display: block; }
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .menu-btn {
@@ -375,13 +382,16 @@ img, svg { display: block; }
 
 .preview-body {
   position: relative;
+  max-height: 340px;
+  overflow: hidden;
 }
 
 .preview-panel {
   margin: 0;
   padding: 20px;
+  height: 340px;
   max-height: 340px;
-  overflow: auto;
+  overflow-y: scroll;
   font-family: var(--font-mono);
   font-size: 12.5px;
   line-height: 1.7;
@@ -389,6 +399,7 @@ img, svg { display: block; }
   white-space: pre;
   -webkit-overflow-scrolling: touch;
   animation: preview-fade-in 0.22s ease;
+  box-sizing: border-box;
 }
 
 @keyframes preview-fade-in {
