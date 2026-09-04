@@ -1,319 +1,421 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zer Lua — Luau Obfuscator</title>
-  <meta name="description" content="Protect Luau scripts before you ship them. Rename variables, encrypt strings, and compile to a virtual machine.">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="style.css?v=2.2.0">
-  <script src="app.js?v=2.2.0" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Zer Lua — Lua &amp; Luau Code Protection</title>
+<meta name="description" content="Client-side code protection for Lua and Luau with virtualization, anti-tamper defenses, and layered obfuscation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="page">
+<header class="header" id="header">
+  <div class="header-inner">
+    <a href="#top" class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+      </span>
+      <span class="brand-name">Zer<span class="brand-accent">Lua</span></span>
+      <span class="brand-badge">v7.0</span>
+    </a>
 
-    <header class="site-header">
-      <a href="/" class="brand" id="brand-home">
+    <nav class="nav-desktop" aria-label="Primary">
+      <a href="#security">Security</a>
+      <a href="#compare">Compare</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+
+    <div class="header-actions">
+      <a href="#top" class="btn btn-primary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 4.4L6 9l4.1 1.6L12 15l1.9-4.4L18 9l-4.1-1.6L12 3Z"/><path d="M5 17v4M3 19h4M19 3v4M17 5h4"/></svg>
+        Start
+      </a>
+      <button class="menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <nav class="nav-mobile" id="mobile-menu" aria-label="Mobile">
+    <a href="#security">Security architecture</a>
+    <a href="#compare">Comparison</a>
+    <a href="#faq">FAQ</a>
+    <a href="#top" class="nav-mobile-cta">Start obfuscating</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-inner reveal">
+      <p class="eyebrow">Lua &amp; Luau code protection</p>
+      <h1 class="hero-title">Protect your Lua<br>&amp; Luau scripts</h1>
+      <p class="hero-sub">Client-side code protection with custom virtualization, anti-tamper defenses, and Zer's server-side script storage — built for people shipping real Roblox and Luau projects.</p>
+
+      <div class="hero-ctas">
+        <a href="#top" class="btn btn-primary btn-lg">
+          <span class="prompt-glyph">&gt;_</span> Start obfuscating
+        </a>
+        <a href="#security" class="btn btn-ghost btn-lg">Explore features</a>
+      </div>
+
+      <ul class="trust-row">
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Client-side processing</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>No script upload required</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Tuned for Roblox &amp; Luau</li>
+      </ul>
+    </div>
+
+    <div class="preview-wrap reveal">
+      <div class="preview-card">
+        <div class="preview-head">
+          <div class="preview-dots" aria-hidden="true">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-amber"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <div class="preview-tabs" role="tablist" aria-label="Code preview">
+            <button class="preview-tab is-active" id="tab-raw" role="tab" aria-selected="true" aria-controls="panel-raw" data-target="raw">Raw Source</button>
+            <button class="preview-tab" id="tab-vm" role="tab" aria-selected="false" aria-controls="panel-vm" data-target="vm">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+              Zer Lua VM
+            </button>
+          </div>
+        </div>
+
+        <div class="preview-body">
+          <pre class="preview-panel is-active" id="panel-raw" role="tabpanel" aria-labelledby="tab-raw"><code><span class="tok-comment">-- Zer Lua</span>
+<span class="tok-comment">-- Press "Obfuscate script" to protect this example.</span>
+
+<span class="tok-kw">local</span> message = <span class="tok-str">"Hello, world!"</span>
+<span class="tok-fn">print</span>(message)
+
+<span class="tok-kw">local</span> <span class="tok-kw">function</span> <span class="tok-fn">square</span>(n)
+    <span class="tok-kw">return</span> n * n
+<span class="tok-kw">end</span>
+
+<span class="tok-fn">print</span>(<span class="tok-str">"Square of 5 is: "</span> .. <span class="tok-fn">tostring</span>(<span class="tok-fn">square</span>(<span class="tok-num">5</span>)))</code></pre>
+
+          <pre class="preview-panel" id="panel-vm" role="tabpanel" aria-labelledby="tab-vm" hidden><code><span class="tok-comment">--[[
+######   ######   ##### 
+    ##   #        #    #
+   ##    #####    ##### 
+  ##     #        #   # 
+######   ######   #    #
+
+By https://zerserver.up.railway.app/ | ZerLuaProtection Just like VMProtect, but for Lua.
+]]</span>
+
+<span class="tok-kw">return</span>(<span class="tok-kw">function</span>(...)
+<span class="tok-kw">local</span> _2a,_1n=string.char,rawget
+<span class="tok-kw">local</span> _0m,_1u,_4x=bit32.bxor,assert,loadstring
+<span class="tok-kw">local</span> _2x,_5v,_3a=pcall,string.sub,type
+<span class="tok-kw">local</span> _2g=string.pack
+<span class="tok-kw">local</span> _1t=string.gsub
+<span class="tok-kw">local</span> _0j,_3r=string.byte,bit32.band
+<span class="tok-kw">local</span> _3d=tostring
+<span class="tok-kw">local</span> _2d=table.concat
+<span class="tok-kw">local</span> _0w=string.find
+<span class="tok-kw">local</span> _1x={(<span class="tok-num">1+28</span>),(<span class="tok-num">9*22-143</span>),(<span class="tok-num">632-397</span>),(<span class="tok-num">704-458</span>),(<span class="tok-num">206-153</span>),(<span class="tok-num">9*16+7</span>),(<span class="tok-num">283-148</span>),(<span class="tok-num">759-561</span>),...}
+<span class="tok-kw">local</span> <span class="tok-kw">function</span> _0a(data)
+    <span class="tok-kw">local</span> _0t={}
+    <span class="tok-kw">for</span> _0i=<span class="tok-num">1</span>,#data <span class="tok-kw">do</span>
+        _0t[_0i]=_2a(_0m(_0j(data,_0i),_3r(_0i+<span class="tok-num">40</span>,<span class="tok-num">0xFF</span>)))
+    <span class="tok-kw">end</span>
+    <span class="tok-kw">return</span> _2d(_0t)
+<span class="tok-kw">end</span>
+<span class="tok-comment">-- ...output continues (33.8kb) — VM dispatch table, opcode handlers, and encoded string pool omitted from this preview</span></code></pre>
+        </div>
+      </div>
+      <p class="preview-caption">Illustrative example — visual demonstration only, not executed on this page.</p>
+    </div>
+  </section>
+
+  <!-- SECURITY ARCHITECTURE -->
+  <section class="section" id="security">
+    <div class="section-head reveal">
+      <p class="eyebrow">Security architecture</p>
+
+      <h2 class="section-title">Multiple layers, one pipeline</h2>
+      <p class="section-sub">Sensitive Lua and Luau logic passes through several layers of code transformation and runtime protection before it ever reaches a player's client.</p>
+    </div>
+
+    <div class="feature-stack">
+
+      <article class="feature-card reveal">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg>
+        </span>
+        <h3>Dynamic anti-dumper defense</h3>
+        <p>Runtime protection designed to make automated inspection and unauthorized memory analysis more difficult to carry out cleanly.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3"/></svg>
+        </span>
+        <h3>Custom VM virtualization</h3>
+        <p>Selected logic is compiled into a custom execution layer with instruction structures that are randomized on every build.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+        </span>
+        <h3>Anti-tamper &amp; runtime integrity</h3>
+        <p>Execution conditions are monitored continuously to flag unexpected runtime modifications while a script is running.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="8" width="14" height="10" rx="2"/><path d="M9 8V6a3 3 0 0 1 6 0v2M9 13h.01M15 13h.01"/></svg>
+        </span>
+        <h3>Analysis resistance</h3>
+        <p>Additional structural layers raise the effort required for automated tooling to statically analyze a protected script.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></svg>
+        </span>
+        <h3>Roblox &amp; Luau optimized</h3>
+        <p>Built around the shape of real Lua and Luau projects, keeping compatibility with common scripting patterns intact.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        </span>
+        <h3>Client-side privacy</h3>
+        <p>Code is processed directly in your browser whenever possible, keeping unnecessary server-side exposure to a minimum.</p>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section class="section" id="compare">
+    <div class="section-head reveal">
+      <p class="eyebrow">Why Zer Lua</p>
+      <h2 class="section-title">How Zer Lua compares</h2>
+      <p class="section-sub">Layered code protection works differently from a traditional minifier or a basic single-pass obfuscator.</p>
+    </div>
+
+    <div class="table-wrap reveal">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Protection capability</th>
+            <th class="col-zer">Zer Lua</th>
+            <th>Generic obfuscators</th>
+            <th>Basic minifiers</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Code transformation</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-partial">✓</span></td>
+            <td><span class="mark mark-no">×</span></td>
+          </tr>
+          <tr>
+            <td>Runtime protection</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-no">×</span></td>
+            <td><span class="mark mark-no">×</span></td>
+          </tr>
+          <tr>
+            <td>VM-based architecture</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-no">×</span></td>
+            <td><span class="mark mark-no">×</span></td>
+          </tr>
+          <tr>
+            <td>Randomized instructions</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-partial">✓</span></td>
+            <td><span class="mark mark-no">×</span></td>
+          </tr>
+          <tr>
+            <td>Anti-tamper layer</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-no">×</span></td>
+            <td><span class="mark mark-no">×</span></td>
+          </tr>
+          <tr>
+            <td>Client-side processing</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-partial">Varies</span></td>
+            <td><span class="mark mark-partial">Varies</span></td>
+          </tr>
+          <tr>
+            <td>Roblox &amp; Luau optimization</td>
+            <td class="col-zer"><span class="mark mark-yes">✓</span></td>
+            <td><span class="mark mark-partial">Varies</span></td>
+            <td><span class="mark mark-no">×</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- RELEASE CARD -->
+  <section class="section">
+    <div class="release-card reveal">
+      <div class="release-top">
+        <span class="badge-pill">Latest release: v1.0</span>
+        <span class="release-date">September 2026</span>
+      </div>
+      <h3 class="release-title">Advanced virtualization &amp; execution protection</h3>
+      <p class="release-desc">New improvements to code transformation, runtime protection, and client-side processing across the obfuscation pipeline.</p>
+      <a href="#top" class="release-link">Explore changelog <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" id="faq">
+    <div class="section-head reveal">
+      <p class="eyebrow">Frequently asked questions</p>
+      <h2 class="section-title">Everything you need to know</h2>
+    </div>
+
+    <div class="faq-list reveal">
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">
+          <span>Does Zer Lua cause frame drops or execution lag in games?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="faq-a">
+          <p>Protected scripts run through an additional execution layer, so some overhead is expected. In practice this is designed to stay small for typical scripts — the more logic you route through custom virtualization, the more that trade-off matters, so it's worth testing your specific script rather than assuming zero impact.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">
+          <span>Is my script uploaded or stored on an external server?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="faq-a">
+          <p>Obfuscation itself runs client-side in your browser. If you choose to use Zer's optional server-side script storage for key-based delivery, that script is stored to serve your own loader — it isn't shared, indexed, or used for anything else.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">
+          <span>Does it support modern GUI frameworks like Fluent, Rayfield, and Maclib?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="faq-a">
+          <p>Yes — the obfuscator targets standard Lua and Luau syntax, so common UI libraries generally work as expected. Highly dynamic metatable tricks in some custom frameworks are the main edge case worth testing before shipping.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">
+          <span>How does the runtime protection handle automated analysis?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="faq-a">
+          <p>It adds friction — irregular structures and runtime checks that make scripted, automated inspection slower and less reliable. Like any protection layer, it raises the cost of analysis rather than making it categorically impossible.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">
+          <span>Is Zer Lua compatible with Roblox and Luau?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="faq-a">
+          <p>Yes — Zer Lua is built specifically around Luau's syntax and runtime behavior, with Roblox scripting patterns as the primary target.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">
+          <span>Can I use Zer Lua directly from a mobile browser?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="faq-a">
+          <p>Yes — the obfuscator runs in any modern mobile browser. For very large scripts, a desktop browser will generally feel faster, but there's no hard requirement to use one.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="section">
+    <div class="final-cta reveal">
+      <div class="final-cta-glow" aria-hidden="true"></div>
+      <h2>Ready to protect your Lua &amp; Luau scripts?</h2>
+      <p>Transform your code directly in your browser with a fast, privacy-focused workflow — no account required to get started.</p>
+      <div class="final-cta-actions">
+        <a href="#top" class="btn btn-primary btn-lg btn-block">
+          <span class="prompt-glyph">&gt;_</span> Start obfuscating
+        </a>
+        <a href="#top" class="btn btn-dark btn-lg btn-block">
+          Join official Discord <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a href="#top" class="brand">
         <span class="brand-mark" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
         </span>
-        <span class="brand-name">Zer<span class="brand-accent"> Lua</span></span>
-        <span class="brand-badge">V7.0</span>
+        <span class="brand-name">Zer<span class="brand-accent">Lua</span></span>
       </a>
-      <div class="header-actions">
-        <a href="/" class="btn btn-ghost btn-sm">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>
-          Home
-        </a>
-        <button class="menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-        </button>
+      <p>Client-side Lua &amp; Luau code protection for developers who ship real projects.</p>
+    </div>
+
+    <div class="footer-links">
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="#security">Features</a>
+        <a href="#top">Changelog</a>
+        <a href="#faq">FAQ</a>
       </div>
-    </header>
-
-    <nav class="nav-mobile" id="mobile-menu" aria-label="Mobile">
-      <a href="/">Back to landing page</a>
-    </nav>
-
-    <div class="signal-rail" id="signal-rail" aria-hidden="true"></div>
-
-    <!-- ===================== OBFUSCATOR ===================== -->
-    <main class="obfuscator-page">
-
-      <div class="compiler-head">
-        <span class="compiler-icon" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m10 8-4 4 4 4M14 8l4 4-4 4"/></svg>
-        </span>
-        <h2 class="compiler-title">Zer Lua VM Compiler</h2>
-        <span class="compiler-badge">Client-Side</span>
+      <div class="footer-col">
+        <h4>Community</h4>
+        <a href="#top">Discord</a>
       </div>
-
-      <button id="btn-obfuscate" class="btn btn-primary btn-run">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-        <span class="btn-text">Obfuscate Code</span>
-        <span class="btn-loader hidden" aria-hidden="true"></span>
-      </button>
-
-      <div class="settings-block">
-
-        <div class="select-row">
-          <span class="select-row-label">Preset</span>
-          <div class="dropdown" id="dd-preset">
-            <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
-              <span class="dropdown-trigger-label">Zer Lua</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-chevron"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
-            <ul class="dropdown-menu" role="listbox" hidden>
-              <li class="dropdown-option is-selected" role="option" aria-selected="true" data-value="zerlua">
-                <span>Zer Lua</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="dropdown-check"><path d="M20 6 9 17l-5-5"/></svg>
-              </li>
-              <li class="dropdown-option" role="option" aria-selected="false" data-value="minify">
-                <span>Minify</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="dropdown-check"><path d="M20 6 9 17l-5-5"/></svg>
-              </li>
-            </ul>
-          </div>
-          <input type="hidden" id="opt-preset" value="zerlua">
-        </div>
-
-        <div class="select-row">
-          <span class="select-row-label">Lua Version</span>
-          <div class="dropdown" id="dd-lua-version">
-            <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
-              <span class="dropdown-trigger-label">LuaU</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-chevron"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
-            <ul class="dropdown-menu" role="listbox" hidden>
-              <li class="dropdown-option" role="option" aria-selected="false" data-value="lua51">
-                <span>Lua51</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="dropdown-check"><path d="M20 6 9 17l-5-5"/></svg>
-              </li>
-              <li class="dropdown-option is-selected" role="option" aria-selected="true" data-value="luau">
-                <span>LuaU</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="dropdown-check"><path d="M20 6 9 17l-5-5"/></svg>
-              </li>
-            </ul>
-          </div>
-          <input type="hidden" id="opt-lua-version" value="luau">
-        </div>
-
-        <label class="toggle-row toggle-row-switch">
-          <span class="toggle-copy">
-            <span class="toggle-title">Pretty print</span>
-          </span>
-          <span class="switch">
-            <input type="checkbox" id="opt-pretty-print">
-            <span class="switch-track" aria-hidden="true"></span>
-          </span>
-        </label>
-
-        <div class="select-row">
-          <span class="select-row-label">Seed</span>
-          <div class="seed-row">
-            <input type="text" id="seed-display" class="select-input" readonly aria-label="Compile seed, generated automatically each run">
-            <button id="btn-seed-refresh" class="btn btn-icon" type="button" aria-label="Generate new seed preview" title="Generate new seed preview">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>
-            </button>
-          </div>
-          <span class="seed-hint">A new seed is generated automatically on every run — this preview updates when you press Obfuscate.</span>
-        </div>
-
-        <div class="stage-actions">
-          <button id="btn-copy" class="btn btn-icon" disabled aria-label="Copy output" title="Copy output">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
-            <span id="copy-text" class="sr-only">Copy</span>
-          </button>
-          <button id="btn-download" class="btn btn-icon" disabled aria-label="Download output" title="Download output">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          </button>
-          <button id="btn-share" class="btn btn-icon" disabled aria-label="Share output" title="Share output">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
-            <span id="share-text" class="sr-only">Share link</span>
-          </button>
-        </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="#top">Privacy</a>
+        <a href="#top">Terms</a>
       </div>
-
-      <div class="status-card" role="status">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="status-card-icon" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
-        <p>Zer Lua active: hardened with dynamic anti-dumper traps (runtime hook interceptors &amp; metatable probes), an encrypted VM stream, and steganographic AI shields.</p>
-      </div>
-
-      <div class="editor-tabs" role="tablist" aria-label="Compiler panels">
-        <button class="editor-tab is-active" data-editor-tab="input" role="tab" aria-selected="true">Input Lua</button>
-        <button class="editor-tab" data-editor-tab="output" role="tab" aria-selected="false">Output</button>
-        <button class="editor-tab" data-editor-tab="logs" role="tab" aria-selected="false">Logs</button>
-      </div>
-
-      <div class="editor-panel is-active" id="editor-panel-input" role="tabpanel">
-        <div class="editor-panel-head">
-          <span class="editor-panel-label">Lua Input (Source)</span>
-          <div class="stage-status" id="validation-status">
-            <span class="status-dot" id="indicator"></span>
-            <span id="status-title">Ready</span>
-          </div>
-          <button id="btn-run" class="btn btn-cyan btn-sm" title="Compile and obfuscate — same action as the Obfuscate Code button" aria-label="Run: compile and obfuscate this code">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-            Run
-          </button>
-        </div>
-
-        <div class="editor-wrap">
-          <div class="editor-gutter" id="input-gutter" aria-hidden="true"><span>1</span></div>
-          <div class="editor-current-line" id="input-current-line" aria-hidden="true"></div>
-          <pre class="editor-highlight" id="input-highlight" aria-hidden="true"><code></code></pre>
-          <textarea id="input-editor" class="code-area" spellcheck="false" placeholder="-- Paste your Luau source here...&#10;&#10;local x = 42&#10;print('Hello World')">-- Zer Lua Obfuscator
--- Press "Obfuscate script" to protect this example.
-
-local message = "Hello, world!"
-print(message)
-
-local function square(n)
-    return n * n
-end
-
-print("Square of 5 is: " .. tostring(square(5)))</textarea>
-        </div>
-
-        <div class="stage-actions">
-          <input type="file" id="file-input" accept=".lua,.luau,.txt" hidden>
-          <button id="btn-upload" class="btn btn-ghost">Upload file</button>
-        </div>
-
-        <details class="advanced-options">
-          <summary>Advanced protection options</summary>
-          <div class="toggle-list">
-            <label class="toggle-row">
-              <input type="checkbox" id="opt-rename" checked>
-              <span class="toggle-copy">
-                <span class="toggle-title">Rename variables</span>
-                <span class="toggle-desc">Scrambles local names into short identifiers.</span>
-              </span>
-            </label>
-
-            <label class="toggle-row">
-              <input type="checkbox" id="opt-preserve" checked>
-              <span class="toggle-copy">
-                <span class="toggle-title">Protect Roblox globals</span>
-                <span class="toggle-desc">Keeps game APIs and engine indices untouched.</span>
-              </span>
-            </label>
-
-            <label class="toggle-row">
-              <input type="checkbox" id="opt-encode" checked>
-              <span class="toggle-copy">
-                <span class="toggle-title">Encrypt strings</span>
-                <span class="toggle-desc">Converts plain text strings into byte arrays.</span>
-              </span>
-            </label>
-
-            <label class="toggle-row">
-              <input type="checkbox" id="opt-scramble" checked>
-              <span class="toggle-copy">
-                <span class="toggle-title">Scramble control flow</span>
-                <span class="toggle-desc">Injects opaque conditions and junk branches.</span>
-              </span>
-            </label>
-
-            <label class="toggle-row">
-              <input type="checkbox" id="opt-oneline">
-              <span class="toggle-copy">
-                <span class="toggle-title">Minify code</span>
-                <span class="toggle-desc">Strips comments, whitespace, and newlines. Automatically enabled by the Minify preset.</span>
-              </span>
-            </label>
-
-            <label class="toggle-row">
-              <input type="checkbox" id="opt-antitamper">
-              <span class="toggle-copy">
-                <span class="toggle-title">Anti-tamper protection</span>
-                <span class="toggle-desc">Detects hooked functions and debugger timing, halts on tampering. May false-positive on some executors.</span>
-              </span>
-            </label>
-          </div>
-
-          <div class="select-list">
-            <label class="select-row">
-              <span class="select-row-label">VM architecture</span>
-              <select id="opt-vm-type" class="select-input">
-                <option value="none">None — standard obfuscation</option>
-                <option value="register" selected>Register-based VM</option>
-                <option value="stack">Stack-based VM</option>
-              </select>
-            </label>
-
-            <label class="select-row">
-              <span class="select-row-label">Hardening grade</span>
-              <select id="opt-vm-level" class="select-input">
-                <option value="max" selected>Max — LZSS, anti-dump, S-box cipher</option>
-                <option value="normal">Normal — XOR table, instruction shuffling</option>
-                <option value="debug">Debug — readable VM for stack tracing</option>
-              </select>
-            </label>
-          </div>
-        </details>
-      </div>
-
-      <div class="editor-panel" id="editor-panel-output" role="tabpanel" hidden>
-        <div class="editor-panel-head">
-          <span class="editor-panel-label">Obfuscated Output (VM)</span>
-        </div>
-
-        <div class="editor-wrap">
-          <div class="editor-gutter" id="output-gutter" aria-hidden="true"><span>1</span></div>
-          <pre class="editor-highlight" id="output-highlight" aria-hidden="true"><code></code></pre>
-          <textarea id="output-editor" class="code-area" readonly placeholder="-- Your protected script will appear here..."></textarea>
-        </div>
-
-        <div class="output-empty" id="output-empty">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 8-4 4 4 4M14 8l4 4-4 4"/></svg>
-          <p>No obfuscated output yet.</p>
-          <p class="output-empty-sub">Run Obfuscate Code to generate your protected script.</p>
-        </div>
-
-        <div class="select-list" style="margin-top: 12px;">
-          <label class="select-row">
-            <span class="select-row-label">Share via</span>
-            <select id="opt-provider" class="select-input">
-              <option value="rubis" selected>Rubiš</option>
-              <option value="pastebin">Pastebin</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="stage-actions" style="margin-top: 8px;">
-          <button id="btn-save-script" class="btn btn-ghost" disabled>Save to Scripts</button>
-        </div>
-      </div>
-
-      <div class="editor-panel" id="editor-panel-logs" role="tabpanel" hidden>
-        <div class="editor-panel-head">
-          <span class="editor-panel-label">
-            <span class="status-dot status-green" aria-hidden="true"></span>
-            Compiler Logs
-          </span>
-          <span class="badge-pill" id="logs-count">0 events</span>
-        </div>
-
-        <div class="logs-list" id="logs-list">
-          <div class="logs-empty" id="logs-empty">
-            <span class="prompt-glyph" aria-hidden="true">&gt;_</span>
-            <p>No compiler events yet.</p>
-            <p class="output-empty-sub">Click "Obfuscate Code" to begin compilation.</p>
-          </div>
-        </div>
-      </div>
-
-    </main>
-
+    </div>
   </div>
 
-  <div class="toast-region" id="toast-region" aria-live="polite"></div>
+  <div class="footer-bottom">
+    <p>© 2026 Zer Lua. All rights reserved.</p>
+  </div>
+</footer>
 
+<script src="app.js"></script>
 </body>
 </html>
