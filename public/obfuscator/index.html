@@ -1,1 +1,319 @@
-larangan
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zer Lua — Luau Obfuscator</title>
+  <meta name="description" content="Protect Luau scripts before you ship them. Rename variables, encrypt strings, and compile to a virtual machine.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css?v=2.2.0">
+  <script src="app.js?v=2.2.0" defer></script>
+</head>
+<body>
+
+  <div class="page">
+
+    <header class="site-header">
+      <a href="/" class="brand" id="brand-home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+        </span>
+        <span class="brand-name">Zer<span class="brand-accent"> Lua</span></span>
+        <span class="brand-badge">V7.0</span>
+      </a>
+      <div class="header-actions">
+        <a href="/" class="btn btn-ghost btn-sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>
+          Home
+        </a>
+        <button class="menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <nav class="nav-mobile" id="mobile-menu" aria-label="Mobile">
+      <a href="/">Back to landing page</a>
+    </nav>
+
+    <div class="signal-rail" id="signal-rail" aria-hidden="true"></div>
+
+    <!-- ===================== OBFUSCATOR ===================== -->
+    <main class="obfuscator-page">
+
+      <div class="compiler-head">
+        <span class="compiler-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m10 8-4 4 4 4M14 8l4 4-4 4"/></svg>
+        </span>
+        <h2 class="compiler-title">Zer Lua VM Compiler</h2>
+        <span class="compiler-badge">Client-Side</span>
+      </div>
+
+      <button id="btn-obfuscate" class="btn btn-primary btn-run">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        <span class="btn-text">Obfuscate Code</span>
+        <span class="btn-loader hidden" aria-hidden="true"></span>
+      </button>
+
+      <div class="settings-block">
+
+        <div class="select-row">
+          <span class="select-row-label">Preset</span>
+          <div class="dropdown" id="dd-preset">
+            <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="dropdown-trigger-label">Zer Lua</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-chevron"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <ul class="dropdown-menu" role="listbox" hidden>
+              <li class="dropdown-option is-selected" role="option" aria-selected="true" data-value="zerlua">
+                <span>Zer Lua</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="dropdown-check"><path d="M20 6 9 17l-5-5"/></svg>
+              </li>
+              <li class="dropdown-option" role="option" aria-selected="false" data-value="minify">
+                <span>Minify</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="dropdown-check"><path d="M20 6 9 17l-5-5"/></svg>
+              </li>
+            </ul>
+          </div>
+          <input type="hidden" id="opt-preset" value="zerlua">
+        </div>
+
+        <div class="select-row">
+          <span class="select-row-label">Lua Version</span>
+          <div class="dropdown" id="dd-lua-version">
+            <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="dropdown-trigger-label">LuaU</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-chevron"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <ul class="dropdown-menu" role="listbox" hidden>
+              <li class="dropdown-option" role="option" aria-selected="false" data-value="lua51">
+                <span>Lua51</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="dropdown-check"><path d="M20 6 9 17l-5-5"/></svg>
+              </li>
+              <li class="dropdown-option is-selected" role="option" aria-selected="true" data-value="luau">
+                <span>LuaU</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="dropdown-check"><path d="M20 6 9 17l-5-5"/></svg>
+              </li>
+            </ul>
+          </div>
+          <input type="hidden" id="opt-lua-version" value="luau">
+        </div>
+
+        <label class="toggle-row toggle-row-switch">
+          <span class="toggle-copy">
+            <span class="toggle-title">Pretty print</span>
+          </span>
+          <span class="switch">
+            <input type="checkbox" id="opt-pretty-print">
+            <span class="switch-track" aria-hidden="true"></span>
+          </span>
+        </label>
+
+        <div class="select-row">
+          <span class="select-row-label">Seed</span>
+          <div class="seed-row">
+            <input type="text" id="seed-display" class="select-input" readonly aria-label="Compile seed, generated automatically each run">
+            <button id="btn-seed-refresh" class="btn btn-icon" type="button" aria-label="Generate new seed preview" title="Generate new seed preview">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>
+            </button>
+          </div>
+          <span class="seed-hint">A new seed is generated automatically on every run — this preview updates when you press Obfuscate.</span>
+        </div>
+
+        <div class="stage-actions">
+          <button id="btn-copy" class="btn btn-icon" disabled aria-label="Copy output" title="Copy output">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
+            <span id="copy-text" class="sr-only">Copy</span>
+          </button>
+          <button id="btn-download" class="btn btn-icon" disabled aria-label="Download output" title="Download output">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          </button>
+          <button id="btn-share" class="btn btn-icon" disabled aria-label="Share output" title="Share output">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+            <span id="share-text" class="sr-only">Share link</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="status-card" role="status">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="status-card-icon" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+        <p>Zer Lua active: hardened with dynamic anti-dumper traps (runtime hook interceptors &amp; metatable probes), an encrypted VM stream, and steganographic AI shields.</p>
+      </div>
+
+      <div class="editor-tabs" role="tablist" aria-label="Compiler panels">
+        <button class="editor-tab is-active" data-editor-tab="input" role="tab" aria-selected="true">Input Lua</button>
+        <button class="editor-tab" data-editor-tab="output" role="tab" aria-selected="false">Output</button>
+        <button class="editor-tab" data-editor-tab="logs" role="tab" aria-selected="false">Logs</button>
+      </div>
+
+      <div class="editor-panel is-active" id="editor-panel-input" role="tabpanel">
+        <div class="editor-panel-head">
+          <span class="editor-panel-label">Lua Input (Source)</span>
+          <div class="stage-status" id="validation-status">
+            <span class="status-dot" id="indicator"></span>
+            <span id="status-title">Ready</span>
+          </div>
+          <button id="btn-run" class="btn btn-cyan btn-sm" title="Compile and obfuscate — same action as the Obfuscate Code button" aria-label="Run: compile and obfuscate this code">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            Run
+          </button>
+        </div>
+
+        <div class="editor-wrap">
+          <div class="editor-gutter" id="input-gutter" aria-hidden="true"><span>1</span></div>
+          <div class="editor-current-line" id="input-current-line" aria-hidden="true"></div>
+          <pre class="editor-highlight" id="input-highlight" aria-hidden="true"><code></code></pre>
+          <textarea id="input-editor" class="code-area" spellcheck="false" placeholder="-- Paste your Luau source here...&#10;&#10;local x = 42&#10;print('Hello World')">-- Zer Lua Obfuscator
+-- Press "Obfuscate script" to protect this example.
+
+local message = "Hello, world!"
+print(message)
+
+local function square(n)
+    return n * n
+end
+
+print("Square of 5 is: " .. tostring(square(5)))</textarea>
+        </div>
+
+        <div class="stage-actions">
+          <input type="file" id="file-input" accept=".lua,.luau,.txt" hidden>
+          <button id="btn-upload" class="btn btn-ghost">Upload file</button>
+        </div>
+
+        <details class="advanced-options">
+          <summary>Advanced protection options</summary>
+          <div class="toggle-list">
+            <label class="toggle-row">
+              <input type="checkbox" id="opt-rename" checked>
+              <span class="toggle-copy">
+                <span class="toggle-title">Rename variables</span>
+                <span class="toggle-desc">Scrambles local names into short identifiers.</span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <input type="checkbox" id="opt-preserve" checked>
+              <span class="toggle-copy">
+                <span class="toggle-title">Protect Roblox globals</span>
+                <span class="toggle-desc">Keeps game APIs and engine indices untouched.</span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <input type="checkbox" id="opt-encode" checked>
+              <span class="toggle-copy">
+                <span class="toggle-title">Encrypt strings</span>
+                <span class="toggle-desc">Converts plain text strings into byte arrays.</span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <input type="checkbox" id="opt-scramble" checked>
+              <span class="toggle-copy">
+                <span class="toggle-title">Scramble control flow</span>
+                <span class="toggle-desc">Injects opaque conditions and junk branches.</span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <input type="checkbox" id="opt-oneline">
+              <span class="toggle-copy">
+                <span class="toggle-title">Minify code</span>
+                <span class="toggle-desc">Strips comments, whitespace, and newlines. Automatically enabled by the Minify preset.</span>
+              </span>
+            </label>
+
+            <label class="toggle-row">
+              <input type="checkbox" id="opt-antitamper">
+              <span class="toggle-copy">
+                <span class="toggle-title">Anti-tamper protection</span>
+                <span class="toggle-desc">Detects hooked functions and debugger timing, halts on tampering. May false-positive on some executors.</span>
+              </span>
+            </label>
+          </div>
+
+          <div class="select-list">
+            <label class="select-row">
+              <span class="select-row-label">VM architecture</span>
+              <select id="opt-vm-type" class="select-input">
+                <option value="none">None — standard obfuscation</option>
+                <option value="register" selected>Register-based VM</option>
+                <option value="stack">Stack-based VM</option>
+              </select>
+            </label>
+
+            <label class="select-row">
+              <span class="select-row-label">Hardening grade</span>
+              <select id="opt-vm-level" class="select-input">
+                <option value="max" selected>Max — LZSS, anti-dump, S-box cipher</option>
+                <option value="normal">Normal — XOR table, instruction shuffling</option>
+                <option value="debug">Debug — readable VM for stack tracing</option>
+              </select>
+            </label>
+          </div>
+        </details>
+      </div>
+
+      <div class="editor-panel" id="editor-panel-output" role="tabpanel" hidden>
+        <div class="editor-panel-head">
+          <span class="editor-panel-label">Obfuscated Output (VM)</span>
+        </div>
+
+        <div class="editor-wrap">
+          <div class="editor-gutter" id="output-gutter" aria-hidden="true"><span>1</span></div>
+          <pre class="editor-highlight" id="output-highlight" aria-hidden="true"><code></code></pre>
+          <textarea id="output-editor" class="code-area" readonly placeholder="-- Your protected script will appear here..."></textarea>
+        </div>
+
+        <div class="output-empty" id="output-empty">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 8-4 4 4 4M14 8l4 4-4 4"/></svg>
+          <p>No obfuscated output yet.</p>
+          <p class="output-empty-sub">Run Obfuscate Code to generate your protected script.</p>
+        </div>
+
+        <div class="select-list" style="margin-top: 12px;">
+          <label class="select-row">
+            <span class="select-row-label">Share via</span>
+            <select id="opt-provider" class="select-input">
+              <option value="rubis" selected>Rubiš</option>
+              <option value="pastebin">Pastebin</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="stage-actions" style="margin-top: 8px;">
+          <button id="btn-save-script" class="btn btn-ghost" disabled>Save to Scripts</button>
+        </div>
+      </div>
+
+      <div class="editor-panel" id="editor-panel-logs" role="tabpanel" hidden>
+        <div class="editor-panel-head">
+          <span class="editor-panel-label">
+            <span class="status-dot status-green" aria-hidden="true"></span>
+            Compiler Logs
+          </span>
+          <span class="badge-pill" id="logs-count">0 events</span>
+        </div>
+
+        <div class="logs-list" id="logs-list">
+          <div class="logs-empty" id="logs-empty">
+            <span class="prompt-glyph" aria-hidden="true">&gt;_</span>
+            <p>No compiler events yet.</p>
+            <p class="output-empty-sub">Click "Obfuscate Code" to begin compilation.</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+</body>
+</html>
