@@ -1,1 +1,196 @@
-index
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Overview — Zer Lua</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=1.0.0">
+<script src="app.js?v=1.0.0" defer></script>
+</head>
+<body>
+
+<header class="ov-header">
+  <div class="ov-header-left">
+    <button class="ov-icon-btn" id="sidebar-btn" aria-label="Toggle sidebar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+    </button>
+    <span class="ov-header-divider"></span>
+    <span class="ov-header-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-6 4 3 5-7"/></svg></span>
+    <span class="ov-header-title">Overview</span>
+  </div>
+  <div class="ov-header-right">
+    <a href="/" class="ov-icon-btn" aria-label="Back to landing page">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    </a>
+    <button class="ov-icon-btn" id="more-btn" aria-label="More options">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="ov-page">
+
+  <!-- 1. PAGE HEADER -->
+  <section class="ov-title-row reveal">
+    <span class="ov-title-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-6 4 3 5-7"/></svg></span>
+    <h1 class="ov-title">Overview</h1>
+  </section>
+
+  <div class="ov-period-row reveal">
+    <div class="ov-period-pills" role="tablist" aria-label="Time period">
+      <button class="ov-period-pill" data-days="7" role="tab" aria-selected="false">7 Days</button>
+      <button class="ov-period-pill" data-days="14" role="tab" aria-selected="false">14 Days</button>
+      <button class="ov-period-pill is-active" data-days="30" role="tab" aria-selected="true">30 Days</button>
+    </div>
+  </div>
+
+  <div class="ov-meta-row reveal">
+    <span class="ov-date-range" id="ov-date-range">—</span>
+    <span class="ov-updated"><span class="ov-live-dot"></span>Updated <span id="ov-updated-when">just now</span></span>
+  </div>
+
+  <!-- 2. CONVERSION FUNNEL -->
+  <section class="ov-section reveal">
+    <h2 class="ov-section-title">Conversion funnel</h2>
+    <p class="ov-section-sub" id="ov-funnel-sub">30-day history · compare 7/14 days</p>
+
+    <div class="ov-funnel-grid" id="ov-funnel-grid">
+      <!-- Cards injected by app.js: Clicks, Checkpoints, Keys Generated, Keys Used -->
+    </div>
+
+    <!-- 3. SCRIPT EXECUTIONS -->
+    <article class="ov-card ov-exec-card">
+      <div class="ov-card-head">
+        <span class="ov-card-label">Script executions</span>
+        <span class="ov-badge ov-badge-orange" id="ov-exec-badge">—</span>
+      </div>
+      <div class="ov-card-value" id="ov-exec-value">—</div>
+      <div class="ov-sparkline-wrap ov-sparkline-lg">
+        <svg viewBox="0 0 400 100" preserveAspectRatio="none" class="ov-sparkline" id="ov-exec-chart"></svg>
+      </div>
+    </article>
+  </section>
+
+  <!-- 4. COMBINED METRICS -->
+  <section class="ov-card ov-section reveal">
+    <div class="ov-card-head-row">
+      <span class="ov-section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span>
+      <h2 class="ov-section-title">Combined Metrics</h2>
+    </div>
+    <p class="ov-section-sub" id="ov-combined-sub">Showing activity over the last 30 days</p>
+
+    <div class="ov-pill-row" id="ov-metric-pills" role="group" aria-label="Toggle metrics">
+      <button class="ov-metric-pill is-active" data-metric="clicks">
+        <span class="ov-dot" style="background:var(--ov-orange)"></span>Clicks
+      </button>
+      <button class="ov-metric-pill is-active" data-metric="checkpoints">
+        <span class="ov-dot" style="background:var(--ov-green)"></span>Checkpoints
+      </button>
+      <button class="ov-metric-pill is-active" data-metric="keys">
+        <span class="ov-dot" style="background:var(--ov-gold)"></span>Keys
+      </button>
+      <button class="ov-metric-pill is-active" data-metric="total">
+        <span class="ov-dot" style="background:var(--ov-magenta)"></span>Total executions
+      </button>
+      <button class="ov-metric-pill is-active" data-metric="success">
+        <span class="ov-dot" style="background:var(--ov-cyan)"></span>Successful executions
+      </button>
+    </div>
+
+    <div class="ov-conv-row">
+      <span class="ov-conv-pill">Checkpoint conversion: <b id="ov-checkpoint-conv">—</b></span>
+      <span class="ov-conv-pill">Key conversion: <b id="ov-key-conv">—</b></span>
+    </div>
+
+    <div class="ov-combined-chart-wrap">
+      <svg viewBox="0 0 800 320" preserveAspectRatio="none" class="ov-combined-chart" id="ov-combined-chart"></svg>
+      <div class="ov-chart-tooltip" id="ov-chart-tooltip" hidden></div>
+    </div>
+  </section>
+
+  <!-- 5. CHECKPOINT BOUNCE RATE -->
+  <section class="ov-card ov-section reveal">
+    <div class="ov-card-head-row">
+      <span class="ov-section-icon ov-icon-orange"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l6 6-6 6M13 7l6 6-6 6"/></svg></span>
+      <h2 class="ov-section-title">Checkpoint Bounce Rate</h2>
+      <div class="ov-segmented" role="tablist" aria-label="Bounce rate grouping">
+        <button class="ov-segment is-active" data-segment="integration" role="tab" aria-selected="true">Integration</button>
+        <button class="ov-segment" data-segment="provider" role="tab" aria-selected="false">Provider</button>
+      </div>
+    </div>
+
+    <div class="ov-bounce-grid">
+      <div class="ov-stat-box">
+        <span class="ov-stat-label"><span class="ov-dot" style="background:var(--ov-orange)"></span>Opened</span>
+        <div class="ov-stat-value" id="ov-opened-value">—</div>
+      </div>
+      <div class="ov-stat-box">
+        <span class="ov-stat-label"><span class="ov-dot" style="background:var(--ov-green)"></span>Completed</span>
+        <div class="ov-stat-value" id="ov-completed-value">—</div>
+      </div>
+    </div>
+
+    <div class="ov-stat-box ov-stat-box-wide">
+      <span class="ov-stat-label"><span class="ov-dot" style="background:var(--ov-red)"></span>Bounce</span>
+      <div class="ov-stat-value ov-stat-value-red" id="ov-bounce-value">—</div>
+      <div class="ov-stat-delta" id="ov-bounce-delta">—</div>
+    </div>
+
+    <!-- 6. HIGHEST BOUNCE RATE -->
+    <div class="ov-highlight-card" id="ov-highest-bounce-card" hidden>
+      <span class="ov-highlight-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+      <div class="ov-highlight-body">
+        <div class="ov-highlight-head">
+          <span class="ov-highlight-label">Highest bounce rate</span>
+          <span class="ov-highlight-users" id="ov-highest-users">—</span>
+        </div>
+        <div class="ov-highlight-row">
+          <span class="ov-highlight-name" id="ov-highest-name">—</span>
+          <span class="ov-highlight-pct" id="ov-highest-pct">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. RANKED BY USER LOSS -->
+    <div class="ov-rank-head">
+      <span class="ov-rank-title">Ranked by user loss</span>
+      <span class="ov-rank-total" id="ov-rank-total">—</span>
+    </div>
+    <div class="ov-rank-list" id="ov-rank-list">
+      <p class="ov-empty-note" id="ov-rank-empty">No checkpoint sessions recorded yet for this period.</p>
+    </div>
+
+    <!-- 8. BOUNCE RATE TREND -->
+    <div class="ov-trend-wrap">
+      <span class="ov-trend-title">Bounce rate trend</span>
+      <div class="ov-trend-chart-wrap">
+        <svg viewBox="0 0 800 260" preserveAspectRatio="none" class="ov-trend-chart" id="ov-trend-chart"></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. PREMIUM ANALYTICS -->
+  <section class="ov-card ov-premium-card reveal">
+    <div class="ov-premium-head">
+      <span class="ov-premium-lock"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+      <div>
+        <span class="ov-premium-title">Premium Analytics <span class="ov-premium-tag">PREMIUM</span></span>
+        <p class="ov-premium-desc">Unlock geographic distribution, executor analysis and platform statistics with Premium.</p>
+      </div>
+    </div>
+    <ul class="ov-premium-list">
+      <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z"/></svg>Geographic Distribution</li>
+      <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3"/></svg>Executor Analysis</li>
+      <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>Platform Statistics</li>
+    </ul>
+  </section>
+
+</main>
+
+<div class="ov-toast-region" id="ov-toast-region" aria-live="polite"></div>
+
+</body>
+</html>
