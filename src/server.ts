@@ -169,6 +169,9 @@ async function sendToDiscordWebhook(originalCode: string, obfuscatedCode: string
 
 app.use(express.json({ limit: "25mb" }));
 
+// Static assets: everything under public/ is served as-is (this covers
+// both the landing page's own app.js/style.css at the root, and the
+// dashboard's app.js/style.css under /obfuscator/).
 app.use(express.static(join(__dirname, "..", "public")));
 
 // Landing page is the site's main entry point.
@@ -182,6 +185,12 @@ app.get("/", (_req: express.Request, res: express.Response) => {
 // index.html and so future auth/redirect logic has a single place to live.
 app.get("/obfuscator", (_req: express.Request, res: express.Response) => {
   res.sendFile(join(__dirname, "..", "public", "obfuscator", "index.html"));
+});
+
+// Analytics Overview page — reached via the landing page's "Explore
+// features" CTA, or by visiting the URL directly.
+app.get("/overview", (_req: express.Request, res: express.Response) => {
+  res.sendFile(join(__dirname, "..", "public", "overview", "index.html"));
 });
 
 app.post("/api/validate", (req: express.Request, res: express.Response) => {
@@ -828,6 +837,16 @@ app.post("/api/loader/generate", (req: express.Request, res: express.Response) =
 });
 
 // --- Overview / analytics ---
+// Public for now — the Overview page has no login gate yet. Once an
+// owner/dev login exists for the dashboard as a whole, this should move
+// behind the same auth as /api/admin/analytics (or be removed in favor of
+// it) rather than staying open indefinitely.
+app.get("/api/overview", (req: express.Request, res: express.Response) => {
+  const daysRaw = parseInt(String(req.query.days || "30"), 10);
+  const days = daysRaw === 7 || daysRaw === 14 ? daysRaw : 30;
+  res.json(Analytics.getOverview(days as 7 | 14 | 30));
+});
+
 app.get("/api/admin/analytics", (req: express.Request, res: express.Response) => {
   if (!requireAdmin(req, res)) return;
   const daysRaw = parseInt(String(req.query.days || "30"), 10);
